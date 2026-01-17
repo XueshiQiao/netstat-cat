@@ -38,6 +38,7 @@ function createWindow(): void {
     height: 670,
     show: false,
     autoHideMenuBar: true,
+    frame: false, // Fully frameless
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -59,7 +60,24 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
-}
+
+  // Window Controls IPC
+  ipcMain.on('window-minimize', () => {
+    mainWindow.minimize()
+  })
+  ipcMain.on('window-maximize', () => {
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize()
+    } else {
+      mainWindow.maximize()
+    }
+  })
+  ipcMain.on('window-close', () => {
+    mainWindow.close()
+  })
+
+  // IPC test
+  ipcMain.on('ping', () => console.log('pong'))}
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.electron')

@@ -86,7 +86,7 @@ class Lexer {
       const text = this.input.substring(start, this.pos)
       if (text.toUpperCase() === 'AND') return { type: 'LOGIC', value: 'AND' }
       if (text.toUpperCase() === 'OR') return { type: 'LOGIC', value: 'OR' }
-      return { type: 'IDENTIFIER', value: text } // Keep case for values, lowercase field names in parser if needed
+      return { type: 'IDENTIFIER', value: text }
     }
 
     // Numbers (or Strings starting with number like 123*)
@@ -203,7 +203,7 @@ class ComparisonNode implements ASTNode {
         return false // Unknown field
     }
 
-    if (actualValue === null) return false // Field might be missing (e.g. remote port on listen)
+    if (actualValue === null) return false
 
     // Normalize for comparison
     let compareVal = this.value
@@ -301,31 +301,34 @@ class Parser {
 
   // Comparison -> Identifier Operator Value
   private parseComparison(): ASTNode {
-    if (this.currentToken.type !== 'IDENTIFIER') {
-      throw new Error(`Expected identifier, got ${this.currentToken.type}`)
+    const token = this.currentToken
+    if (token.type !== 'IDENTIFIER') {
+      throw new Error(`Expected identifier, got ${token.type}`)
     }
-    const field = this.currentToken.value.toLowerCase()
+    const field = token.value.toLowerCase()
     this.eat('IDENTIFIER')
 
-    if (this.currentToken.type !== 'OPERATOR') {
-      throw new Error(`Expected operator, got ${this.currentToken.type}`)
+    const opToken = this.currentToken
+    if (opToken.type !== 'OPERATOR') {
+      throw new Error(`Expected operator, got ${opToken.type}`)
     }
-    const op = this.currentToken.value
+    const op = opToken.value
     this.eat('OPERATOR')
 
+    const valToken = this.currentToken
     let val: string | number
-    if (this.currentToken.type === 'NUMBER') {
-      val = this.currentToken.value
+    if (valToken.type === 'NUMBER') {
+      val = valToken.value
       this.eat('NUMBER')
-    } else if (this.currentToken.type === 'STRING') {
-      val = this.currentToken.value
+    } else if (valToken.type === 'STRING') {
+      val = valToken.value
       this.eat('STRING')
-    } else if (this.currentToken.type === 'IDENTIFIER') {
+    } else if (valToken.type === 'IDENTIFIER') {
       // Allow unquoted strings as values
-      val = this.currentToken.value
+      val = valToken.value
       this.eat('IDENTIFIER')
     } else {
-      throw new Error(`Expected value, got ${this.currentToken.type}`)
+      throw new Error(`Expected value, got ${valToken.type}`)
     }
 
     return new ComparisonNode(field, op, val)
@@ -338,7 +341,6 @@ export function parseQuery(query: string): ((item: NetstatItem) => boolean) | nu
     const ast = parser.parse()
     return (item) => ast.evaluate(item)
   } catch (e) {
-    // console.error('Parse error:', e)
     return null
   }
 }
