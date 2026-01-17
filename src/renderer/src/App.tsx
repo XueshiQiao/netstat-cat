@@ -392,29 +392,29 @@ function App() {
             data={filteredData}
             fixedHeaderContent={() => (
               <tr className="bg-gray-50 dark:bg-gray-700 transition-colors">
-                <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-24">
+                <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-24 whitespace-nowrap">
                   Proto
                 </th>
-                <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-48">
+                <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-64 whitespace-nowrap">
                   Local Address
                 </th>
-                <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-48">
+                <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-64 whitespace-nowrap">
                   Remote Address
                 </th>
-                <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-32">
+                <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-32 whitespace-nowrap">
                   State
                 </th>
-                <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-24">
+                <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-24 whitespace-nowrap">
                   PID
                 </th>
-                <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-full whitespace-nowrap">
                   Process
                 </th>
               </tr>
             )}
             itemContent={(_index, item) => (
               <>
-                <td className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm align-top w-24">
+                <td className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm align-top w-24 whitespace-nowrap">
                   <span
                     className={`px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full ${
                       item.protocol === 'tcp' ||
@@ -427,16 +427,16 @@ function App() {
                     {item.protocol}
                   </span>
                 </td>
-                <td className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm font-mono text-gray-700 dark:text-gray-300 align-top w-48">
+                <td className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm font-mono text-gray-700 dark:text-gray-300 align-top w-64 whitespace-nowrap">
                   {item.local.address || (item.protocol.includes('6') ? '[::]' : '0.0.0.0')}:
                   {item.local.port}
                 </td>
-                <td className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm font-mono text-gray-700 dark:text-gray-300 align-top w-48">
+                <td className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm font-mono text-gray-700 dark:text-gray-300 align-top w-64 whitespace-nowrap">
                   {item.remote.address || item.remote.port
                     ? `${item.remote.address || (item.protocol.includes('6') ? '[::]' : '0.0.0.0')}:${item.remote.port}`
                     : '-'}
                 </td>
-                <td className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm align-top w-32">
+                <td className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm align-top w-32 whitespace-nowrap">
                   {item.state ? (
                     <span
                       className={`px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full ${
@@ -453,11 +453,11 @@ function App() {
                     '-'
                   )}
                 </td>
-                <td className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 align-top w-24">
+                <td className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 align-top w-24 whitespace-nowrap">
                   {item.pid}
                 </td>
                 <td
-                  className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 align-top truncate max-w-xs"
+                  className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 align-top truncate w-full"
                   title={item.processName}
                 >
                   {item.processName || '-'}
