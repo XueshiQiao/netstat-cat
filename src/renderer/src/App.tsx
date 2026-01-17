@@ -66,7 +66,7 @@ function App() {
   }, [autoRefresh])
 
   const filteredData = useMemo(() => {
-    return data.filter(item => {
+    return data.filter((item) => {
       // 1. Protocol Filter
       if (filterProtocol !== 'all') {
         if (!item.protocol.startsWith(filterProtocol)) return false
@@ -82,64 +82,79 @@ function App() {
       // 3. State Filter
       if (filterState !== 'all') {
         if (!item.state) {
-           // If item has no state (like UDP often), hide if we require a specific state like LISTEN
-           if (filterState !== 'other') return false 
+          // If item has no state (like UDP often), hide if we require a specific state like LISTEN
+          if (filterState !== 'other') return false
         } else {
-           const s = item.state.toUpperCase()
-           if (filterState === 'listen' && s !== 'LISTEN' && s !== 'LISTENING') return false
-           if (filterState === 'established' && s !== 'ESTABLISHED') return false
-           if (filterState === 'other' && (s === 'LISTEN' || s === 'LISTENING' || s === 'ESTABLISHED')) return false
+          const s = item.state.toUpperCase()
+          if (filterState === 'listen' && s !== 'LISTEN' && s !== 'LISTENING') return false
+          if (filterState === 'established' && s !== 'ESTABLISHED') return false
+          if (
+            filterState === 'other' &&
+            (s === 'LISTEN' || s === 'LISTENING' || s === 'ESTABLISHED')
+          )
+            return false
         }
       }
 
       // 4. Text Filter (Process Name, PID, Port - supports Wildcard & Range & Semantic Query)
       if (searchText) {
         const query = searchText.trim()
-        
+
         // Try Semantic Query First
         const semanticFilter = parseQuery(query)
         if (semanticFilter) {
-            if (!semanticFilter(item)) return false
+          if (!semanticFilter(item)) return false
         } else {
-            // Fallback to Simple Text / Range Search
-            const lowerQuery = query.toLowerCase()
-            
-            // Range Check (e.g. "80-443")
-            const rangeMatch = lowerQuery.match(/^(\d+)-(\d+)$/)
-            if (rangeMatch) {
-              const min = parseInt(rangeMatch[1])
-              const max = parseInt(rangeMatch[2])
-              const localPort = item.local.port
-              const remotePort = item.remote.port || 0
-              const pid = item.pid
+          // Fallback to Simple Text / Range Search
+          const lowerQuery = query.toLowerCase()
 
-              // Check if any numeric field falls in range
-              const portInRange = (localPort >= min && localPort <= max) || (remotePort >= min && remotePort <= max)
-              const pidInRange = pid >= min && pid <= max
-              
-              if (!portInRange && !pidInRange) return false
-            } else {
-              // Normal/Wildcard Match
-              // Handle explicit wildcards '*'
-              const isWildcard = lowerQuery.includes('*')
-              const regexString = lowerQuery.split('*').map(s => s.replace(/[.*+?^${}()|[\\]/g, '\\$&')).join('.*')
-              const regex = new RegExp(`^${regexString}$`, 'i') 
-              
-              const matchString = (str: string | number | null) => {
-                if (!str) return false
-                const s = str.toString().toLowerCase()
-                if (isWildcard) return regex.test(s)
-                return s.includes(lowerQuery)
-              }
+          // Range Check (e.g. "80-443")
+          const rangeMatch = lowerQuery.match(/^(\d+)-(\d+)$/)
+          if (rangeMatch) {
+            const min = parseInt(rangeMatch[1])
+            const max = parseInt(rangeMatch[2])
+            const localPort = item.local.port
+            const remotePort = item.remote.port || 0
+            const pid = item.pid
 
-              const matchesProcess = matchString(item.processName)
-              const matchesPid = matchString(item.pid)
-              const matchesLocalPort = matchString(item.local.port)
-              const matchesRemotePort = matchString(item.remote.port)
-              const matchesState = matchString(item.state)
+            // Check if any numeric field falls in range
+            const portInRange =
+              (localPort >= min && localPort <= max) || (remotePort >= min && remotePort <= max)
+            const pidInRange = pid >= min && pid <= max
 
-              if (!matchesProcess && !matchesPid && !matchesLocalPort && !matchesRemotePort && !matchesState) return false
+            if (!portInRange && !pidInRange) return false
+          } else {
+            // Normal/Wildcard Match
+            // Handle explicit wildcards '*'
+            const isWildcard = lowerQuery.includes('*')
+            const regexString = lowerQuery
+              .split('*')
+              .map((s) => s.replace(/[.*+?^${}()|[\\]/g, '\\$&'))
+              .join('.*')
+            const regex = new RegExp(`^${regexString}$`, 'i')
+
+            const matchString = (str: string | number | null) => {
+              if (!str) return false
+              const s = str.toString().toLowerCase()
+              if (isWildcard) return regex.test(s)
+              return s.includes(lowerQuery)
             }
+
+            const matchesProcess = matchString(item.processName)
+            const matchesPid = matchString(item.pid)
+            const matchesLocalPort = matchString(item.local.port)
+            const matchesRemotePort = matchString(item.remote.port)
+            const matchesState = matchString(item.state)
+
+            if (
+              !matchesProcess &&
+              !matchesPid &&
+              !matchesLocalPort &&
+              !matchesRemotePort &&
+              !matchesState
+            )
+              return false
+          }
         }
       }
 
@@ -157,13 +172,13 @@ function App() {
             <span className="text-xl">🐱</span>
           </h1>
           <div className="flex items-center gap-4">
-             <div className="text-sm text-gray-500 mr-4">
-               {filteredData.length} / {data.length} items
-             </div>
-             <label className="flex items-center space-x-2 cursor-pointer select-none">
-              <input 
-                type="checkbox" 
-                checked={autoRefresh} 
+            <div className="text-sm text-gray-500 mr-4">
+              {filteredData.length} / {data.length} items
+            </div>
+            <label className="flex items-center space-x-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={autoRefresh}
                 onChange={(e) => setAutoRefresh(e.target.checked)}
                 className="form-checkbox h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
               />
@@ -177,9 +192,9 @@ function App() {
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>
             <button
-               onClick={() => window.electron.ipcRenderer.send('toggle-devtools')}
-               className="text-gray-400 hover:text-gray-600 p-1"
-               title="Toggle Developer Tools"
+              onClick={() => window.electron.ipcRenderer.send('toggle-devtools')}
+              className="text-gray-400 hover:text-gray-600 p-1"
+              title="Toggle Developer Tools"
             >
               🐞
             </button>
@@ -188,84 +203,90 @@ function App() {
 
         {/* Filters Row */}
         <div className="max-w-7xl mx-auto w-full space-y-3">
-            {/* Search Input Row */}
-            <div className="w-full">
-              <input
-                type="text"
-                placeholder="Search Process, PID, Port (e.g. '80', 'pid=123', 'lport>1000 && state=LISTEN')"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              />
+          {/* Search Input Row */}
+          <div className="w-full">
+            <input
+              type="text"
+              placeholder="Search Process, PID, Port (e.g. '80', 'pid=123', 'lport>1000 && state=LISTEN')"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            />
+          </div>
+
+          {/* Buttons Row */}
+          <div className="flex flex-wrap gap-6 items-center">
+            {/* Protocol Buttons */}
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+                Protocol
+              </span>
+              <div className="flex rounded-md shadow-sm" role="group">
+                {(['all', 'tcp', 'udp'] as const).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setFilterProtocol(p)}
+                    className={`px-4 py-1.5 text-xs font-medium border first:rounded-l-lg last:rounded-r-lg ${
+                      filterProtocol === p
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {p.toUpperCase()}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Buttons Row */}
-            <div className="flex flex-wrap gap-6 items-center">
-                {/* Protocol Buttons */}
-                <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Protocol</span>
-                  <div className="flex rounded-md shadow-sm" role="group">
-                    {(['all', 'tcp', 'udp'] as const).map((p) => (
-                      <button
-                        key={p}
-                        onClick={() => setFilterProtocol(p)}
-                        className={`px-4 py-1.5 text-xs font-medium border first:rounded-l-lg last:rounded-r-lg ${ 
-                          filterProtocol === p 
-                          ? 'bg-blue-600 text-white border-blue-600' 
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        {p.toUpperCase()}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* IP Version Buttons */}
-                <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">IP Version</span>
-                  <div className="flex rounded-md shadow-sm" role="group">
-                    {(['all', '4', '6'] as const).map((v) => (
-                      <button
-                        key={v}
-                        onClick={() => setFilterIpVer(v)}
-                        className={`px-4 py-1.5 text-xs font-medium border first:rounded-l-lg last:rounded-r-lg ${ 
-                          filterIpVer === v 
-                          ? 'bg-blue-600 text-white border-blue-600' 
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        {v === 'all' ? 'ALL' : `IPv${v}`}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* State Buttons */}
-                <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Connection State</span>
-                  <div className="flex rounded-md shadow-sm" role="group">
-                    {[ 
-                      { id: 'all', label: 'All' },
-                      { id: 'listen', label: 'Listen' },
-                      { id: 'established', label: 'Est.' },
-                      { id: 'other', label: 'Other' },
-                    ].map((s) => (
-                      <button
-                        key={s.id}
-                        onClick={() => setFilterState(s.id as StateFilter)}
-                        className={`px-3 py-1.5 text-xs font-medium border first:rounded-l-lg last:rounded-r-lg ${ 
-                          filterState === s.id 
-                          ? 'bg-blue-600 text-white border-blue-600' 
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+            {/* IP Version Buttons */}
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+                IP Version
+              </span>
+              <div className="flex rounded-md shadow-sm" role="group">
+                {(['all', '4', '6'] as const).map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setFilterIpVer(v)}
+                    className={`px-4 py-1.5 text-xs font-medium border first:rounded-l-lg last:rounded-r-lg ${
+                      filterIpVer === v
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {v === 'all' ? 'ALL' : `IPv${v}`}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {/* State Buttons */}
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+                Connection State
+              </span>
+              <div className="flex rounded-md shadow-sm" role="group">
+                {[
+                  { id: 'all', label: 'All' },
+                  { id: 'listen', label: 'Listen' },
+                  { id: 'established', label: 'Est.' },
+                  { id: 'other', label: 'Other' }
+                ].map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => setFilterState(s.id as StateFilter)}
+                    className={`px-3 py-1.5 text-xs font-medium border first:rounded-l-lg last:rounded-r-lg ${
+                      filterState === s.id
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
 
         {error && (
@@ -277,59 +298,83 @@ function App() {
 
       <div className="flex-grow bg-white max-w-7xl w-full mx-auto shadow-lg border border-gray-200 overflow-hidden flex flex-col">
         {filteredData.length === 0 && !loading ? (
-           <div className="flex flex-col items-center justify-center h-full text-gray-500">
-             <span className="text-4xl mb-2">🔍</span>
-             <p>No matching connections.</p>
-           </div>
+          <div className="flex flex-col items-center justify-center h-full text-gray-500">
+            <span className="text-4xl mb-2">🔍</span>
+            <p>No matching connections.</p>
+          </div>
         ) : (
           <TableVirtuoso
             data={filteredData}
             fixedHeaderContent={() => (
               <tr className="bg-gray-50">
-                <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-bold text-gray-600 uppercase tracking-wider w-24">Proto</th>
-                <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-bold text-gray-600 uppercase tracking-wider w-48">Local Address</th>
-                <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-bold text-gray-600 uppercase tracking-wider w-48">Remote Address</th>
-                <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-bold text-gray-600 uppercase tracking-wider w-32">State</th>
-                <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-bold text-gray-600 uppercase tracking-wider w-24">PID</th>
-                <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Process</th>
+                <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-bold text-gray-600 uppercase tracking-wider w-24">
+                  Proto
+                </th>
+                <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-bold text-gray-600 uppercase tracking-wider w-48">
+                  Local Address
+                </th>
+                <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-bold text-gray-600 uppercase tracking-wider w-48">
+                  Remote Address
+                </th>
+                <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-bold text-gray-600 uppercase tracking-wider w-32">
+                  State
+                </th>
+                <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-bold text-gray-600 uppercase tracking-wider w-24">
+                  PID
+                </th>
+                <th className="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  Process
+                </th>
               </tr>
             )}
             itemContent={(_index, item) => (
               <>
                 <td className="px-5 py-2 border-b border-gray-200 text-sm align-top">
-                  <span className={`px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full ${ 
-                    item.protocol === 'tcp' || item.protocol === 'tcp4' || item.protocol === 'tcp6' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}> 
+                  <span
+                    className={`px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full ${
+                      item.protocol === 'tcp' ||
+                      item.protocol === 'tcp4' ||
+                      item.protocol === 'tcp6'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}
+                  >
                     {item.protocol}
                   </span>
                 </td>
                 <td className="px-5 py-2 border-b border-gray-200 text-sm font-mono text-gray-700 align-top">
-                  {item.local.address || (item.protocol.includes('6') ? '[::]' : '0.0.0.0')}:{item.local.port}
+                  {item.local.address || (item.protocol.includes('6') ? '[::]' : '0.0.0.0')}:
+                  {item.local.port}
                 </td>
                 <td className="px-5 py-2 border-b border-gray-200 text-sm font-mono text-gray-700 align-top">
-                  {item.remote.address || item.remote.port ? (
-                    `${item.remote.address || (item.protocol.includes('6') ? '[::]' : '0.0.0.0')}:${item.remote.port}`
+                  {item.remote.address || item.remote.port
+                    ? `${item.remote.address || (item.protocol.includes('6') ? '[::]' : '0.0.0.0')}:${item.remote.port}`
+                    : '-'}
+                </td>
+                <td className="px-5 py-2 border-b border-gray-200 text-sm align-top">
+                  {item.state ? (
+                    <span
+                      className={`px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full ${
+                        item.state === 'ESTABLISHED'
+                          ? 'bg-blue-100 text-blue-800'
+                          : item.state === 'LISTEN' || item.state === 'LISTENING'
+                            ? 'bg-purple-100 text-purple-800'
+                            : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {item.state}
+                    </span>
                   ) : (
                     '-'
                   )}
                 </td>
-                <td className="px-5 py-2 border-b border-gray-200 text-sm align-top">
-                   {item.state ? (
-                     <span className={`px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full ${ 
-                        item.state === 'ESTABLISHED' ? 'bg-blue-100 text-blue-800' :
-                        item.state === 'LISTEN' || item.state === 'LISTENING' ? 'bg-purple-100 text-purple-800' :
-                        'bg-gray-100 text-gray-800'
-                     }`}> 
-                       {item.state}
-                     </span>
-                   ) : '-'}
-                </td>
                 <td className="px-5 py-2 border-b border-gray-200 text-sm text-gray-500 align-top">
                   {item.pid}
                 </td>
-                <td className="px-5 py-2 border-b border-gray-200 text-sm font-medium text-gray-900 group-hover:text-blue-600 align-top truncate max-w-xs" title={item.processName}>
+                <td
+                  className="px-5 py-2 border-b border-gray-200 text-sm font-medium text-gray-900 group-hover:text-blue-600 align-top truncate max-w-xs"
+                  title={item.processName}
+                >
                   {item.processName || '-'}
                 </td>
               </>

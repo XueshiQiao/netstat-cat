@@ -1,4 +1,3 @@
-
 export type NetstatItem = {
   protocol: string
   local: {
@@ -14,12 +13,12 @@ export type NetstatItem = {
   processName: string
 }
 
-type Token = 
-  | { type: 'IDENTIFIER', value: string }
-  | { type: 'NUMBER', value: number }
-  | { type: 'STRING', value: string }
-  | { type: 'OPERATOR', value: string } // =, !=, >, <, >=, <=, :
-  | { type: 'LOGIC', value: 'AND' | 'OR' }
+type Token =
+  | { type: 'IDENTIFIER'; value: string }
+  | { type: 'NUMBER'; value: number }
+  | { type: 'STRING'; value: string }
+  | { type: 'OPERATOR'; value: string } // =, !=, >, <, >=, <=, :
+  | { type: 'LOGIC'; value: 'AND' | 'OR' }
   | { type: 'NOT' }
   | { type: 'LPAREN' }
   | { type: 'RPAREN' }
@@ -35,22 +34,31 @@ class Lexer {
 
     const char = this.input[this.pos]
 
-    if (char === '(') { this.pos++; return { type: 'LPAREN' } }
-    if (char === ')') { this.pos++; return { type: 'RPAREN' } }
+    if (char === '(') {
+      this.pos++
+      return { type: 'LPAREN' }
+    }
+    if (char === ')') {
+      this.pos++
+      return { type: 'RPAREN' }
+    }
     if (char === '!') {
       if (this.input[this.pos + 1] === '=') {
         this.pos += 2
         return { type: 'OPERATOR', value: '!=' }
       }
-      this.pos++; return { type: 'NOT' }
+      this.pos++
+      return { type: 'NOT' }
     }
 
     // Logic Operators &&, ||
     if (char === '&' && this.input[this.pos + 1] === '&') {
-      this.pos += 2; return { type: 'LOGIC', value: 'AND' }
+      this.pos += 2
+      return { type: 'LOGIC', value: 'AND' }
     }
     if (char === '|' && this.input[this.pos + 1] === '|') {
-      this.pos += 2; return { type: 'LOGIC', value: 'OR' }
+      this.pos += 2
+      return { type: 'LOGIC', value: 'OR' }
     }
 
     // Comparison Operators
@@ -63,7 +71,10 @@ class Lexer {
       }
       return { type: 'OPERATOR', value: op }
     }
-    if (char === ':') { this.pos++; return { type: 'OPERATOR', value: ':' } } // Alias for =
+    if (char === ':') {
+      this.pos++
+      return { type: 'OPERATOR', value: ':' }
+    } // Alias for =
 
     // Identifiers (field names) or Keywords (AND, OR) or Unquoted Values
     // Starts with letter or * or _
@@ -155,15 +166,41 @@ class ComparisonNode implements ASTNode {
     let actualValue: string | number | null = null
 
     switch (this.field) {
-      case 'pid': actualValue = item.pid; break
-      case 'proto': case 'protocol': actualValue = item.protocol; break
-      case 'state': actualValue = item.state; break
-      case 'process': case 'name': case 'processname': actualValue = item.processName; break
-      case 'lport': case 'localport': actualValue = item.local.port; break
-      case 'rport': case 'remoteport': actualValue = item.remote.port; break
-      case 'laddr': case 'localaddress': case 'local': actualValue = item.local.address || (item.protocol.includes('6') ? '[::]' : '0.0.0.0'); break
-      case 'raddr': case 'remoteaddress': case 'remote': actualValue = item.remote.address || (item.protocol.includes('6') ? '[::]' : '0.0.0.0'); break
-      default: return false // Unknown field
+      case 'pid':
+        actualValue = item.pid
+        break
+      case 'proto':
+      case 'protocol':
+        actualValue = item.protocol
+        break
+      case 'state':
+        actualValue = item.state
+        break
+      case 'process':
+      case 'name':
+      case 'processname':
+        actualValue = item.processName
+        break
+      case 'lport':
+      case 'localport':
+        actualValue = item.local.port
+        break
+      case 'rport':
+      case 'remoteport':
+        actualValue = item.remote.port
+        break
+      case 'laddr':
+      case 'localaddress':
+      case 'local':
+        actualValue = item.local.address || (item.protocol.includes('6') ? '[::]' : '0.0.0.0')
+        break
+      case 'raddr':
+      case 'remoteaddress':
+      case 'remote':
+        actualValue = item.remote.address || (item.protocol.includes('6') ? '[::]' : '0.0.0.0')
+        break
+      default:
+        return false // Unknown field
     }
 
     if (actualValue === null) return false // Field might be missing (e.g. remote port on listen)
@@ -174,24 +211,31 @@ class ComparisonNode implements ASTNode {
 
     // Case insensitive string comparison
     if (typeof compareVal === 'string') {
-        compareVal = compareVal.toLowerCase()
-        actualVal = String(actualVal).toLowerCase()
+      compareVal = compareVal.toLowerCase()
+      actualVal = String(actualVal).toLowerCase()
     }
 
     switch (this.op) {
-      case '=': case ':': 
+      case '=':
+      case ':':
         if (typeof compareVal === 'string' && compareVal.includes('*')) {
-            // Wildcard match
-            const regex = new RegExp('^' + compareVal.replace(/\*/g, '.*') + '$')
-            return regex.test(String(actualVal))
+          // Wildcard match
+          const regex = new RegExp('^' + compareVal.replace(/\*/g, '.*') + '$')
+          return regex.test(String(actualVal))
         }
         return actualVal == compareVal
-      case '!=': return actualVal != compareVal
-      case '>': return actualVal > compareVal
-      case '<': return actualVal < compareVal
-      case '>=': return actualVal >= compareVal
-      case '<=': return actualVal <= compareVal
-      default: return false
+      case '!=':
+        return actualVal != compareVal
+      case '>':
+        return actualVal > compareVal
+      case '<':
+        return actualVal < compareVal
+      case '>=':
+        return actualVal >= compareVal
+      case '<=':
+        return actualVal <= compareVal
+      default:
+        return false
     }
   }
 }
@@ -258,30 +302,30 @@ class Parser {
   // Comparison -> Identifier Operator Value
   private parseComparison(): ASTNode {
     if (this.currentToken.type !== 'IDENTIFIER') {
-       throw new Error(`Expected identifier, got ${this.currentToken.type}`)
+      throw new Error(`Expected identifier, got ${this.currentToken.type}`)
     }
     const field = this.currentToken.value.toLowerCase()
     this.eat('IDENTIFIER')
 
     if (this.currentToken.type !== 'OPERATOR') {
-        throw new Error(`Expected operator, got ${this.currentToken.type}`)
+      throw new Error(`Expected operator, got ${this.currentToken.type}`)
     }
     const op = this.currentToken.value
     this.eat('OPERATOR')
 
     let val: string | number
     if (this.currentToken.type === 'NUMBER') {
-        val = this.currentToken.value
-        this.eat('NUMBER')
+      val = this.currentToken.value
+      this.eat('NUMBER')
     } else if (this.currentToken.type === 'STRING') {
-        val = this.currentToken.value
-        this.eat('STRING')
+      val = this.currentToken.value
+      this.eat('STRING')
     } else if (this.currentToken.type === 'IDENTIFIER') {
-        // Allow unquoted strings as values
-        val = this.currentToken.value
-        this.eat('IDENTIFIER')
+      // Allow unquoted strings as values
+      val = this.currentToken.value
+      this.eat('IDENTIFIER')
     } else {
-        throw new Error(`Expected value, got ${this.currentToken.type}`)
+      throw new Error(`Expected value, got ${this.currentToken.type}`)
     }
 
     return new ComparisonNode(field, op, val)
@@ -300,12 +344,12 @@ export function parseQuery(query: string): ((item: NetstatItem) => boolean) | nu
 }
 
 export function isValidQuery(query: string): boolean {
-    if (!query.trim()) return false
-    try {
-        const parser = new Parser(query)
-        parser.parse()
-        return true
-    } catch {
-        return false
-    }
+  if (!query.trim()) return false
+  try {
+    const parser = new Parser(query)
+    parser.parse()
+    return true
+  } catch {
+    return false
+  }
 }

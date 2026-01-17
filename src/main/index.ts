@@ -13,14 +13,14 @@ async function getProcessMap(): Promise<Map<string, string>> {
       const { stdout } = await execAsync('tasklist /fo csv /nh')
       const map = new Map<string, string>()
       const lines = stdout.split(/\r?\n/)
-      
-      lines.forEach(line => {
+
+      lines.forEach((line: string) => {
         if (!line.trim()) return
         const safeParts = line.match(/"([^"]*)"/g)
         if (safeParts && safeParts.length >= 2) {
-             const pName = safeParts[0].replace(/"/g, '')
-             const pPid = safeParts[1].replace(/"/g, '')
-             map.set(pPid, pName)
+          const pName = safeParts[0].replace(/"/g, '')
+          const pPid = safeParts[1].replace(/"/g, '')
+          map.set(pPid, pName)
         }
       })
       return map
@@ -75,7 +75,7 @@ app.whenReady().then(() => {
 
   ipcMain.handle('get-netstat', async () => {
     const processMap = await getProcessMap()
-    
+
     try {
       // Execute netstat directly
       const { stdout } = await execAsync('netstat -ano')
@@ -96,34 +96,34 @@ app.whenReady().then(() => {
         // TCP has 5 columns: Proto, Local, Remote, State, PID
         // UDP has 4 columns: Proto, Local, Remote, PID
         if (protocol === 'tcp') {
-            state = parts[3]
-            pid = parts[4]
+          state = parts[3]
+          pid = parts[4]
         } else {
-            state = ''
-            pid = parts[3]
+          state = ''
+          pid = parts[3]
         }
 
         // Identify IPv6 explicitly
         const isV6 = local.includes('[') || local.includes('::')
         if (isV6) {
-            protocol = protocol === 'tcp' ? 'tcp6' : 'udp6'
+          protocol = protocol === 'tcp' ? 'tcp6' : 'udp6'
         }
 
         const parseAddr = (addr: string, protocolVer: string) => {
-            const lastColon = addr.lastIndexOf(':')
-            let address = addr.substring(0, lastColon)
-            const port = parseInt(addr.substring(lastColon + 1))
-            
-            if (address.startsWith('[') && address.endsWith(']')) {
-                address = address.slice(1, -1)
-            }
+          const lastColon = addr.lastIndexOf(':')
+          let address = addr.substring(0, lastColon)
+          const port = parseInt(addr.substring(lastColon + 1))
 
-            // Normalize wildcards for the UI to display 0.0.0.0 or [::]
-            if (address === '0.0.0.0' || address === '::' || address === '*') {
-                address = null 
-            }
-            
-            return { address, port }
+          if (address.startsWith('[') && address.endsWith(']')) {
+            address = address.slice(1, -1)
+          }
+
+          // Normalize wildcards for the UI to display 0.0.0.0 or [::]
+          if (address === '0.0.0.0' || address === '::' || address === '*') {
+            address = null
+          }
+
+          return { address, port }
         }
 
         results.push({

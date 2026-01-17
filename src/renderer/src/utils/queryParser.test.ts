@@ -81,7 +81,7 @@ describe('Query Parser', () => {
     expect(parseQuery('process=chrom*')!(mockItem)).toBe(true)
     expect(parseQuery('process=*exe')!(mockItem)).toBe(true)
   })
-  
+
   it('handles case insensitivity', () => {
     expect(parseQuery('STATE=established')!(mockItem)).toBe(true)
   })
