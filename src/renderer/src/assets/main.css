@@ -7,5 +7,81 @@
 }
 
 .no-drag {
+
   -webkit-app-region: no-drag;
+
+}
+
+
+
+/* Custom Scrollbar */
+
+::-webkit-scrollbar {
+
+  width: 8px;
+
+  height: 8px;
+
+}
+
+
+
+::-webkit-scrollbar-track {
+
+  background: transparent;
+
+}
+
+
+
+::-webkit-scrollbar-thumb {
+
+  background: rgba(0, 0, 0, 0.1);
+
+  border-radius: 10px;
+
+  transition: background 0.2s;
+
+}
+
+
+
+.dark ::-webkit-scrollbar-thumb {
+
+  background: rgba(255, 255, 255, 0.1);
+
+}
+
+
+
+/* Auto-hide effect: show thumb on hover */
+
+*:hover::-webkit-scrollbar-thumb {
+
+  background: rgba(0, 0, 0, 0.2);
+
+}
+
+
+
+.dark *:hover::-webkit-scrollbar-thumb {
+
+  background: rgba(255, 255, 255, 0.2);
+
+}
+
+
+
+::-webkit-scrollbar-thumb:hover {
+
+  background: rgba(0, 0, 0, 0.4) !important;
+
+}
+
+
+
+.dark ::-webkit-scrollbar-thumb:hover {
+
+  background: rgba(255, 255, 255, 0.4) !important;
+
 }
