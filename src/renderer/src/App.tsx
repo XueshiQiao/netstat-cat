@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { TableVirtuoso } from 'react-virtuoso'
+import { parseQuery } from './utils/queryParser'
 
 interface NetstatItem {
   protocol: string
@@ -91,45 +92,54 @@ function App() {
         }
       }
 
-      // 4. Text Filter (Process Name, PID, Port - supports Wildcard & Range)
+      // 4. Text Filter (Process Name, PID, Port - supports Wildcard & Range & Semantic Query)
       if (searchText) {
-        const query = searchText.toLowerCase().trim()
+        const query = searchText.trim()
         
-        // Range Check (e.g. "80-443")
-        const rangeMatch = query.match(/^(\d+)-(\d+)$/)
-        if (rangeMatch) {
-          const min = parseInt(rangeMatch[1])
-          const max = parseInt(rangeMatch[2])
-          const localPort = item.local.port
-          const remotePort = item.remote.port
-          const pid = typeof item.pid === 'number' ? item.pid : parseInt(item.pid)
-
-          // Check if any numeric field falls in range
-          const portInRange = (localPort >= min && localPort <= max) || (remotePort && remotePort >= min && remotePort <= max)
-          const pidInRange = !isNaN(pid) && pid >= min && pid <= max
-          
-          if (!portInRange && !pidInRange) return false
+        // Try Semantic Query First
+        const semanticFilter = parseQuery(query)
+        if (semanticFilter) {
+            if (!semanticFilter(item)) return false
         } else {
-          // Normal/Wildcard Match
-          // Handle explicit wildcards '*'
-          const isWildcard = query.includes('*')
-          const regexString = query.split('*').map(s => s.replace(/[.*+?^${}()|[\\]/g, '\\$&')).join('.*')
-          const regex = new RegExp(`^${regexString}$`, 'i') // Anchor ^$ because .* handles the wildcards. 
-          
-          const matchString = (str: string) => {
-            if (!str) return false
-            const s = str.toString().toLowerCase()
-            if (isWildcard) return regex.test(s)
-            return s.includes(query)
-          }
+            // Fallback to Simple Text / Range Search
+            const lowerQuery = query.toLowerCase()
+            
+            // Range Check (e.g. "80-443")
+            const rangeMatch = lowerQuery.match(/^(\d+)-(\d+)$/)
+            if (rangeMatch) {
+              const min = parseInt(rangeMatch[1])
+              const max = parseInt(rangeMatch[2])
+              const localPort = item.local.port
+              const remotePort = item.remote.port || 0
+              const pid = item.pid
 
-          const matchesProcess = matchString(item.processName)
-          const matchesPid = matchString(item.pid.toString())
-          const matchesLocalPort = matchString(item.local.port.toString())
-          const matchesRemotePort = item.remote.port ? matchString(item.remote.port.toString()) : false
-          const matchesState = item.state ? matchString(item.state) : false
+              // Check if any numeric field falls in range
+              const portInRange = (localPort >= min && localPort <= max) || (remotePort >= min && remotePort <= max)
+              const pidInRange = pid >= min && pid <= max
+              
+              if (!portInRange && !pidInRange) return false
+            } else {
+              // Normal/Wildcard Match
+              // Handle explicit wildcards '*'
+              const isWildcard = lowerQuery.includes('*')
+              const regexString = lowerQuery.split('*').map(s => s.replace(/[.*+?^${}()|[\\]/g, '\\$&')).join('.*')
+              const regex = new RegExp(`^${regexString}$`, 'i') 
+              
+              const matchString = (str: string | number | null) => {
+                if (!str) return false
+                const s = str.toString().toLowerCase()
+                if (isWildcard) return regex.test(s)
+                return s.includes(lowerQuery)
+              }
 
-          if (!matchesProcess && !matchesPid && !matchesLocalPort && !matchesRemotePort && !matchesState) return false
+              const matchesProcess = matchString(item.processName)
+              const matchesPid = matchString(item.pid)
+              const matchesLocalPort = matchString(item.local.port)
+              const matchesRemotePort = matchString(item.remote.port)
+              const matchesState = matchString(item.state)
+
+              if (!matchesProcess && !matchesPid && !matchesLocalPort && !matchesRemotePort && !matchesState) return false
+            }
         }
       }
 
@@ -182,7 +192,7 @@ function App() {
             <div className="w-full">
               <input
                 type="text"
-                placeholder="Search Process, PID, Port (e.g. '80', '80-90', 'chrom*')..."
+                placeholder="Search Process, PID, Port (e.g. '80', 'pid=123', 'lport>1000 && state=LISTEN')"
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
@@ -199,7 +209,7 @@ function App() {
                       <button
                         key={p}
                         onClick={() => setFilterProtocol(p)}
-                        className={`px-4 py-1.5 text-xs font-medium border first:rounded-l-lg last:rounded-r-lg ${
+                        className={`px-4 py-1.5 text-xs font-medium border first:rounded-l-lg last:rounded-r-lg ${ 
                           filterProtocol === p 
                           ? 'bg-blue-600 text-white border-blue-600' 
                           : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -219,7 +229,7 @@ function App() {
                       <button
                         key={v}
                         onClick={() => setFilterIpVer(v)}
-                        className={`px-4 py-1.5 text-xs font-medium border first:rounded-l-lg last:rounded-r-lg ${
+                        className={`px-4 py-1.5 text-xs font-medium border first:rounded-l-lg last:rounded-r-lg ${ 
                           filterIpVer === v 
                           ? 'bg-blue-600 text-white border-blue-600' 
                           : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -235,7 +245,7 @@ function App() {
                 <div className="flex flex-col gap-1">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Connection State</span>
                   <div className="flex rounded-md shadow-sm" role="group">
-                    {[
+                    {[ 
                       { id: 'all', label: 'All' },
                       { id: 'listen', label: 'Listen' },
                       { id: 'established', label: 'Est.' },
@@ -244,7 +254,7 @@ function App() {
                       <button
                         key={s.id}
                         onClick={() => setFilterState(s.id as StateFilter)}
-                        className={`px-3 py-1.5 text-xs font-medium border first:rounded-l-lg last:rounded-r-lg ${
+                        className={`px-3 py-1.5 text-xs font-medium border first:rounded-l-lg last:rounded-r-lg ${ 
                           filterState === s.id 
                           ? 'bg-blue-600 text-white border-blue-600' 
                           : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
