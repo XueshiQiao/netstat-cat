@@ -7,32 +7,39 @@ import { promisify } from 'util'
 
 const execAsync = promisify(exec)
 
-async function getProcessMap(): Promise<Map<string, string>> {
+interface ProcessInfo {
+  name: string
+  path: string
+}
+
+async function getProcessMap(): Promise<Map<string, ProcessInfo>> {
   if (process.platform === 'win32') {
     try {
+      // Use tasklist for fast, lightweight name resolution
       const { stdout } = await execAsync('tasklist /fo csv /nh')
-      const map = new Map<string, string>()
+      const map = new Map<string, ProcessInfo>()
       const lines = stdout.split(/\r?\n/)
 
-      lines.forEach((line: string) => {
+      lines.forEach((line) => {
         if (!line.trim()) return
+        // CSV parsing for tasklist: "Image Name","PID",...
         const safeParts = line.match(/"([^"]*)"/g)
         if (safeParts && safeParts.length >= 2) {
           const pName = safeParts[0].replace(/"/g, '')
           const pPid = safeParts[1].replace(/"/g, '')
-          map.set(pPid, pName)
+          map.set(pPid, { name: pName, path: '' })
         }
       })
       return map
     } catch (e) {
-      console.error('Failed to get process map', e)
+      console.error('Failed to get process map via tasklist', e)
       return new Map()
     }
   }
   return new Map()
 }
 
-function createWindow(): void {
+function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
@@ -62,6 +69,21 @@ function createWindow(): void {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
 
+  return mainWindow
+}
+
+app.whenReady().then(() => {
+  // Set app user model id for windows
+  electronApp.setAppUserModelId('com.electron')
+
+  // Default open or close DevTools by F12 in development
+  // and ignore CommandOrControl + R in production.
+  app.on('browser-window-created', (_, window) => {
+    optimizer.watchWindowShortcuts(window)
+  })
+
+  const mainWindow = createWindow()
+
   // Window Controls IPC
   ipcMain.on('window-minimize', () => {
     mainWindow.minimize()
@@ -77,26 +99,30 @@ function createWindow(): void {
     mainWindow.close()
   })
 
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))}
-
-app.whenReady().then(() => {
-  electronApp.setAppUserModelId('com.electron')
-
-  app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
-  })
-
   ipcMain.on('toggle-devtools', (event) => {
     const win = BrowserWindow.fromWebContents(event.sender)
-    if (win) win.webContents.toggleDevTools()
+    if (win) {
+      win.webContents.toggleDevTools()
+    }
+  })
+
+  // Lazy load process path
+  ipcMain.handle('get-process-path', async (_event, pid: number) => {
+    try {
+      const psScript = `(Get-Process -Id ${pid}).Path`
+      const encodedCommand = Buffer.from(psScript, 'utf16le').toString('base64')
+      const cmd = `powershell -NoProfile -EncodedCommand ${encodedCommand}`
+      const { stdout } = await execAsync(cmd)
+      return stdout.trim()
+    } catch (e) {
+      return ''
+    }
   })
 
   ipcMain.handle('get-netstat', async () => {
     const processMap = await getProcessMap()
 
     try {
-      // Execute netstat directly
       const { stdout } = await execAsync('netstat -ano')
       const lines = stdout.split(/\r?\n/)
       const results: any[] = []
@@ -112,8 +138,6 @@ app.whenReady().then(() => {
         let state = ''
         let pid = ''
 
-        // TCP has 5 columns: Proto, Local, Remote, State, PID
-        // UDP has 4 columns: Proto, Local, Remote, PID
         if (protocol === 'tcp') {
           state = parts[3]
           pid = parts[4]
@@ -122,22 +146,20 @@ app.whenReady().then(() => {
           pid = parts[3]
         }
 
-        // Identify IPv6 explicitly
         const isV6 = local.includes('[') || local.includes('::')
         if (isV6) {
           protocol = protocol === 'tcp' ? 'tcp6' : 'udp6'
         }
 
-        const parseAddr = (addr: string, protocolVer: string) => {
+        const parseAddr = (addr: string) => {
           const lastColon = addr.lastIndexOf(':')
-          let address = addr.substring(0, lastColon)
+          let address: string | null = addr.substring(0, lastColon)
           const port = parseInt(addr.substring(lastColon + 1))
 
           if (address.startsWith('[') && address.endsWith(']')) {
             address = address.slice(1, -1)
           }
 
-          // Normalize wildcards for the UI to display 0.0.0.0 or [::]
           if (address === '0.0.0.0' || address === '::' || address === '*') {
             address = null
           }
@@ -145,13 +167,16 @@ app.whenReady().then(() => {
           return { address, port }
         }
 
+        const info = processMap.get(pid)
+
         results.push({
           protocol,
-          local: parseAddr(local, protocol),
-          remote: parseAddr(remote, protocol),
+          local: parseAddr(local),
+          remote: parseAddr(remote),
           state: state === 'LISTENING' ? 'LISTEN' : state,
           pid: parseInt(pid),
-          processName: processMap.get(pid) || ''
+          processName: info ? info.name : ''
+          // path NOT fetched here
         })
       }
       return results
@@ -161,13 +186,18 @@ app.whenReady().then(() => {
     }
   })
 
-  createWindow()
-
   app.on('activate', function () {
+    // On macOS it's common to re-create a window in the app when the
+    // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
 
+// Quit when all windows are closed, except on macOS. There, it's common
+// for applications and their menu bar to stay active until the user quits
+// explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit()
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
 })
