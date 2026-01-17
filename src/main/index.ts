@@ -39,7 +39,8 @@ function createWindow(): void {
     show: false,
     autoHideMenuBar: true,
     frame: false, // Fully frameless
-    ...(process.platform === 'linux' ? { icon } : {}),
+    // Set icon for both Windows and Linux
+    ...(process.platform === 'win32' || process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false

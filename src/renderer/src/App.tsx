@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { TableVirtuoso } from 'react-virtuoso'
 import { parseQuery } from './utils/queryParser'
+import logo from './assets/pure_cat_logo.png'
 
 interface NetstatItem {
   protocol: string
@@ -171,9 +172,9 @@ function App() {
       <div className="bg-white shadow-sm z-10 flex-shrink-0 drag-region">
         {/* Title Bar / Header Row */}
         <div className="flex justify-between items-center w-full">
-          <div className="px-8 py-3 flex items-center gap-2 select-none">
+          <div className="px-8 py-3 flex items-center gap-3 select-none">
+            <img src={logo} alt="Logo" className="w-8 h-8 object-contain" />
             <h1 className="text-xl font-bold text-blue-600">Netstat Cat</h1>
-            <span className="text-lg">🐱</span>
           </div>
 
           {/* Custom Window Controls */}
@@ -218,29 +219,43 @@ function App() {
                   />
                 </div>
                 
-                <div className="flex items-center gap-4 flex-shrink-0">
-                    <label className="flex items-center space-x-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={autoRefresh}
-                        onChange={(e) => setAutoRefresh(e.target.checked)}
-                        className="form-checkbox h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
-                      />
-                      <span className="font-medium text-gray-700 text-sm">Auto Refresh (2s)</span>
-                    </label>
-                    <button
-                      onClick={fetchData}
-                      disabled={loading}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 px-4 rounded text-sm disabled:opacity-50 transition shadow-sm"
-                    >
-                      {loading ? 'Refreshing...' : 'Refresh'}
-                    </button>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="inline-flex rounded-md shadow-sm border border-gray-300 overflow-hidden" role="group">
+                        <label className={`flex items-center px-3 py-1.5 cursor-pointer select-none transition-colors border-r border-gray-300 ${autoRefresh ? 'bg-blue-50' : 'bg-white'}`}>
+                          <input
+                            type="checkbox"
+                            checked={autoRefresh}
+                            onChange={(e) => setAutoRefresh(e.target.checked)}
+                            className="hidden"
+                          />
+                          <div className={`w-3 h-3 rounded-full mr-2 border ${autoRefresh ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-400'}`}></div>
+                          <span className={`text-xs font-medium ${autoRefresh ? 'text-blue-700' : 'text-gray-600'}`}>Auto</span>
+                        </label>
+                        <button
+                          onClick={fetchData}
+                          disabled={loading}
+                          className="bg-white hover:bg-gray-50 text-gray-700 px-3 py-1.5 disabled:opacity-50 transition-colors flex items-center justify-center"
+                          title="Refresh Now"
+                        >
+                          <svg 
+                            className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-blue-600' : 'text-gray-600'}`} 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                        </button>
+                    </div>
+
                     <button
                       onClick={() => window.electron.ipcRenderer.send('toggle-devtools')}
-                      className="text-gray-400 hover:text-gray-600 p-1"
+                      className="text-gray-400 hover:text-gray-600 p-1 transition-colors"
                       title="Toggle Developer Tools"
                     >
-                      🐞
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                      </svg>
                     </button>
                 </div>
             </div>
