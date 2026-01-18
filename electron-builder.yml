@@ -13,6 +13,7 @@ asarUnpack:
   - resources/**
 win:
   executableName: Netstat-Cat
+  icon: ./resources/icon.ico
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

@@ -1,6 +1,6 @@
 {
   "name": "Netstat-Cat",
-  "version": "1.0.0",
+  "version": "0.0.4",
   "productName": "Netstat Cat",
   "description": "A network monitoring tool for Windows",
   "main": "./out/main/index.js",
