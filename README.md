@@ -17,11 +17,11 @@ Netstat Cat is an Electron desktop application that provides a user-friendly int
 - **Security & Privacy** - Pure local operation with no network connections or data transmission
 - **Real-time Network Monitoring** - Live display of active TCP/UDP connections using `netstat -ano`
 - **Process Identification** - Shows which processes own each network connection
-- **Advanced Filtering System** - Search by process name, PID, port ranges, or semantic queries
+- **Advanced Filtering System** - Search by process name, PID, port ranges, or semantic queries like `process=chrome && lport>1000` [See filtering guide](filters_en.md)
 - **Virtualized Table Performance** - Efficiently handles large numbers of connections using React Virtuoso
 - **Lazy Process Resolution** - Only fetches full executable paths when hovering over processes
 - **LRU Caching** - Intelligent caching for process paths to avoid repeated system calls
-- **Semantic Query Parser** - Advanced search syntax like `process=chrome && lport>1000`
+
 - **Modern UI** - Frameless window with dark/light theme toggle
 - **Auto-refresh Mode** - Configurable live monitoring (2-second intervals)
 
