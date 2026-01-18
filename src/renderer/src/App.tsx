@@ -454,13 +454,19 @@ function App() {
               </div>
             </div>
 
-            {/* Items Count (Aligned Right) */}
-            <div className="ml-auto text-sm text-gray-500 dark:text-gray-400 pb-1 transition-colors">
-              <span className="font-bold text-gray-700 dark:text-gray-200">
-                {filteredData.length}
+            {/* Items Count */}
+            <div className="flex flex-col gap-1 ml-auto">
+              <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right">
+                Results
               </span>
-              <span className="mx-1">/</span>
-              <span>{data.length} items</span>
+              <div className="inline-flex items-center px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm font-medium transition-colors">
+                <span className="text-blue-600 dark:text-blue-400 font-bold">
+                  {filteredData.length}
+                </span>
+                <span className="mx-1.5 text-gray-400 dark:text-gray-500">/</span>
+                <span className="text-gray-600 dark:text-gray-300">{data.length}</span>
+                <span className="ml-1.5 text-gray-400 dark:text-gray-500 text-xs">items</span>
+              </div>
             </div>
           </div>
         </div>
