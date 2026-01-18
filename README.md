@@ -14,6 +14,7 @@ Netstat Cat is an Electron desktop application that provides a user-friendly int
 
 ## Key Features
 
+- **Security & Privacy** - Pure local operation with no network connections or data transmission
 - **Real-time Network Monitoring** - Live display of active TCP/UDP connections using `netstat -ano`
 - **Process Identification** - Shows which processes own each network connection
 - **Advanced Filtering System** - Search by process name, PID, port ranges, or semantic queries
@@ -50,7 +51,7 @@ _Connection filtering options_
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/netstat-cat.git
+git clone https://github.com/XueshiQiao/netstat-cat.git
 cd netstat-cat
 
 # Install dependencies
