@@ -157,7 +157,7 @@ src/
 
 ## License
 
-[Add your license here]
+This project is licensed under the GNU Lesser General Public License v2.1 - see the [LICENSE](LICENSE) file for details.
 
 ## Related Documentation
 
