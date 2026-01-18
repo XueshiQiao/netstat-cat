@@ -27,16 +27,16 @@ Netstat Cat is an Electron desktop application that provides a user-friendly int
 
 ## Screenshots
 
-![Light Theme](screenshots/00-light.png)
+<img src="screenshots/00-light.png" alt="Light Theme" width="600"/>
 _Light theme interface_
 
-![Dark Theme](screenshots/01-dark.png)
+<img src="screenshots/01-dark.png" alt="Dark Theme" width="600"/>
 _Dark theme interface_
 
-![Query Feature](screenshots/03-query.png)
+<img src="screenshots/03-query.png" alt="Query Feature" width="600"/>
 _Advanced query filtering_
 
-![Filter Options](screenshots/04-filter.png)
+<img src="screenshots/04-filter.png" alt="Filter Options" width="600"/>
 _Connection filtering options_
 
 ## Quick Start

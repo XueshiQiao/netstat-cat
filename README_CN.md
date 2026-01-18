@@ -27,16 +27,16 @@ Netstat Cat 是一款 Electron 桌面应用程序，为 Windows 系统上的网�
 
 ## 截图
 
-![浅色主题](screenshots/00-light.png)
+<img src="screenshots/00-light.png" alt="浅色主题" width="600"/>
 _浅色主题界面_
 
-![深色主题](screenshots/01-dark.png)
+<img src="screenshots/01-dark.png" alt="深色主题" width="600"/>
 _深色主题界面_
 
-![查询功能](screenshots/03-query.png)
+<img src="screenshots/03-query.png" alt="查询功能" width="600"/>
 _高级查询过滤_
 
-![过滤选项](screenshots/04-filter.png)
+<img src="screenshots/04-filter.png" alt="过滤选项" width="600"/>
 _连接过滤选项_
 
 ## 快速开始
