@@ -1,0 +1,125 @@
+name: Build and Release
+
+# Trigger on version tags
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # Only Windows platform is enabled
+        # os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [windows-latest]
+
+    steps:
+      # Checkout source code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      # Install project dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # Build the application
+      - name: Build application
+        run: npm run build
+
+      # Build Windows executable
+      - name: Build for Windows
+        if: matrix.os == 'windows-latest'
+        run: npm run build:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build macOS application (commented out)
+      # - name: Build for macOS
+      #   if: matrix.os == 'macos-latest'
+      #   run: npm run build:mac
+      #   env:
+      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build Linux application (commented out)
+      # - name: Build for Linux
+      #   if: matrix.os == 'ubuntu-latest'
+      #   run: npm run build:linux
+      #   env:
+      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Upload Windows installer artifacts
+      - name: Upload Windows artifacts
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: dist/*.exe
+
+      # Upload macOS artifacts (commented out)
+      # - name: Upload macOS artifacts
+      #   if: matrix.os == 'macos-latest'
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: macos-dmg
+      #     path: dist/*.dmg
+
+      # Upload Linux AppImage artifacts (commented out)
+      # - name: Upload Linux artifacts
+      #   if: matrix.os == 'ubuntu-latest'
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: linux-appimage
+      #     path: dist/*.AppImage
+
+      # Upload Linux deb artifacts (commented out)
+      # - name: Upload Linux deb artifacts
+      #   if: matrix.os == 'ubuntu-latest'
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: linux-deb
+      #     path: dist/*.deb
+
+  # Create GitHub release
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      # Checkout source code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Download all build artifacts
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      # Display downloaded files structure for debugging
+      - name: Display structure of downloaded files
+        run: ls -R artifacts/
+
+      # Create GitHub release with artifacts
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/windows-installer/*.exe
+            # artifacts/macos-dmg/*.dmg
+            # artifacts/linux-appimage/*.AppImage
+            # artifacts/linux-deb/*.deb
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
