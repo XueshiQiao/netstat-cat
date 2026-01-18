@@ -1,5 +1,5 @@
-appId: com.electron.app
-productName: me.xueshi.netstat-cat
+appId: me.xueshi.netstat-cat
+productName: Netstat Cat
 directories:
   buildResources: build
 files:
@@ -12,7 +12,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: me.xueshi.netstat-cat
+  executableName: Netstat-Cat
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
