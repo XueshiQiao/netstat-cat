@@ -2,9 +2,15 @@
 
 > A powerful network monitoring tool with real-time connection tracking and advanced filtering capabilities
 
+<div align="center">
+  
+[English] **[[中文](README_CN.md)]**
+
+</div>
+
 ## Overview
 
-Netstat Cat is an Electron desktop application that provides a user-friendly interface for monitoring network connections on Windows. It serves as a graphical replacement for the command-line `netstat` tool, making it easier to monitor network activity and identify which applications are using specific ports.
+Netstat Cat is an Electron desktop application that provides a user-friendly interface for monitoring network connections on Windows (for now). It serves as a graphical replacement for the command-line `netstat` tool, making it easier to monitor network activity and identify which applications are using specific ports.
 
 ## Key Features
 
@@ -20,10 +26,17 @@ Netstat Cat is an Electron desktop application that provides a user-friendly int
 
 ## Screenshots
 
-<!-- Screenshots will be added here -->
+![Light Theme](screenshots/00-light.png)
+_Light theme interface_
 
-![Main Interface](screenshots/main-interface.png)
-_Main interface showing active network connections_
+![Dark Theme](screenshots/01-dark.png)
+_Dark theme interface_
+
+![Query Feature](screenshots/03-query.png)
+_Advanced query filtering_
+
+![Filter Options](screenshots/04-filter.png)
+_Connection filtering options_
 
 ## Quick Start
 
