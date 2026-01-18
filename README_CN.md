@@ -157,7 +157,7 @@ src/
 
 ## 许可证
 
-本项目采用 GNU Lesser General Public License v2.1 许可证 - 详见 [LICENSE](LICENSE) 文件。
+本项目采用 GNU General Public License v3.0 许可证 - 详见 [LICENSE](LICENSE) 文件。
 
 ## 相关文档
 
