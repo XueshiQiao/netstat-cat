@@ -18,6 +18,9 @@ interface NetstatItem {
   pid: number
   processName: string
   processPath?: string
+  uid?: number | null
+  fileDescriptor?: string
+  fileType?: string
 }
 
 type ProtocolFilter = 'all' | 'tcp' | 'udp'
@@ -104,7 +107,7 @@ function App() {
     setLoading(true)
     try {
       // @ts-ignore
-      const result = await window.electron.ipcRenderer.invoke('get-netstat')
+      const result = await window.electron.ipcRenderer.invoke('get-process-info-list')
       setData(result)
       setError(null)
     } catch (err: any) {
@@ -211,13 +214,17 @@ function App() {
             const matchesLocalPort = matchString(item.local.port)
             const matchesRemotePort = matchString(item.remote.port)
             const matchesState = matchString(item.state)
+            const matchesUid = matchString(item.uid ?? null)
+            const matchesFd = matchString(item.fileDescriptor ?? null)
 
             if (
               !matchesProcess &&
               !matchesPid &&
               !matchesLocalPort &&
               !matchesRemotePort &&
-              !matchesState
+              !matchesState &&
+              !matchesUid &&
+              !matchesFd
             )
               return false
           }
@@ -312,7 +319,7 @@ function App() {
             <div className="flex-grow w-full">
               <input
                 type="text"
-                placeholder="Search Process, PID, Port (e.g. '80', 'pid=123', 'lport>1000 && state=LISTEN')"
+                placeholder="Search Process, PID, UID, FD, Port (e.g. '80', 'pid=123', 'uid=501', 'fd=4', 'lport>1000 && state=LISTEN')"
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm font-mono transition-colors"
@@ -502,8 +509,14 @@ function App() {
                 <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-32 whitespace-nowrap">
                   State
                 </th>
-                <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-24 whitespace-nowrap">
+                <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-20 whitespace-nowrap">
                   PID
+                </th>
+                <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-20 whitespace-nowrap">
+                  UID
+                </th>
+                <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-20 whitespace-nowrap">
+                  FD
                 </th>
                 <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-full whitespace-nowrap">
                   Process
@@ -551,8 +564,14 @@ function App() {
                     '-'
                   )}
                 </td>
-                <td className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 align-top w-24 whitespace-nowrap">
+                <td className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 align-top w-20 whitespace-nowrap">
                   {item.pid}
+                </td>
+                <td className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 align-top w-20 whitespace-nowrap">
+                  {item.uid || '-'}
+                </td>
+                <td className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 align-top w-20 whitespace-nowrap font-mono">
+                  {item.fileDescriptor || '-'}
                 </td>
                 <td
                   className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 align-top truncate w-full"

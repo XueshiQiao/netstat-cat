@@ -4,7 +4,6 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { exec } from 'child_process'
 import { promisify } from 'util'
-import netstat from 'node-netstat'
 
 const execAsync = promisify(exec)
 
@@ -13,58 +12,119 @@ interface ProcessInfo {
   path: string
 }
 
-async function getProcessMap(): Promise<Map<string, ProcessInfo>> {
-  if (process.platform === 'win32') {
-    try {
-      // Use tasklist for fast, lightweight name resolution
-      const { stdout } = await execAsync('tasklist /fo csv /nh')
-      const map = new Map<string, ProcessInfo>()
-      const lines = stdout.split(/\r?\n/)
 
-      lines.forEach((line) => {
-        if (!line.trim()) return
-        // CSV parsing for tasklist: "Image Name","PID",...
-        const safeParts = line.match(/"([^"]*)"/g)
-        if (safeParts && safeParts.length >= 2) {
-          const pName = safeParts[0].replace(/"/g, '')
-          const pPid = safeParts[1].replace(/"/g, '')
-          map.set(pPid, { name: pName, path: '' })
-        }
-      })
-      return map
-    } catch (e) {
-      console.error('Failed to get process map via tasklist', e)
-      return new Map()
-    }
-  } else if (process.platform === 'darwin') {
-    try {
-      // Use ps command for macOS process information
-      const { stdout } = await execAsync('ps -eo pid,comm')
-      const map = new Map<string, ProcessInfo>()
-      const lines = stdout.split(/\r?\n/)
+async function getWindowsProcessIdToNameMap(): Promise<Map<string, ProcessInfo>> {
+  try {
+    // Use tasklist for fast, lightweight name resolution
+    const { stdout } = await execAsync('tasklist /fo csv /nh')
+    const map = new Map<string, ProcessInfo>()
+    const lines = stdout.split(/\r?\n/)
 
-      lines.forEach((line, index) => {
-        if (!line.trim()) return
-        // Skip header row (first line)
-        if (index === 0) return
-
-        const parts = line.trim().split(/\s+/)
-        if (parts.length >= 2) {
-          const pPid = parts[0]
-          const pName = parts[1].replace(/^\//, '') // Remove leading slash
-          // Extract just the executable name from full path
-          const nameParts = pName.split('/')
-          const finalName = nameParts[nameParts.length - 1] || pName
-          map.set(pPid, { name: finalName, path: '' })
-        }
-      })
-      return map
-    } catch (e) {
-      console.error('Failed to get process map via ps', e)
-      return new Map()
-    }
+    lines.forEach((line) => {
+      if (!line.trim()) return
+      // CSV parsing for tasklist: "Image Name","PID",...
+      const safeParts = line.match(/"([^"]*)"/g)
+      if (safeParts && safeParts.length >= 2) {
+        const pName = safeParts[0].replace(/"/g, '')
+        const pPid = safeParts[1].replace(/"/g, '')
+        map.set(pPid, { name: pName, path: '' })
+      }
+    })
+    return map
+  } catch (e) {
+    console.error('Failed to get process map via tasklist', e)
+    return new Map()
   }
   return new Map()
+}
+
+async function getWindowsProcessInfoList() {
+  const processIdToNameMap = await getWindowsProcessIdToNameMap()
+
+  try {
+    const { stdout } = await execAsync('netstat -ano')
+    const lines = stdout.split(/\r?\n/)
+    const results: any[] = []
+
+    for (const line of lines) {
+      const parts = line.trim().split(/\s+/)
+      if (parts.length < 4) continue
+      if (parts[0] === 'Proto' || parts[0] === 'Active') continue
+
+      let protocol = parts[0].toLowerCase()
+      const local = parts[1]
+      const remote = parts[2]
+      let state = ''
+      let pid = ''
+
+      if (protocol === 'tcp') {
+        state = parts[3]
+        pid = parts[4]
+      } else {
+        state = ''
+        pid = parts[3]
+      }
+
+      const isV6 = local.includes('[') || local.includes('::')
+      if (isV6) {
+        protocol = protocol === 'tcp' ? 'tcp6' : 'udp6'
+      }
+
+      const parseAddr = (addr: string) => {
+        const lastColon = addr.lastIndexOf(':')
+        let address: string | null = addr.substring(0, lastColon)
+        const port = parseInt(addr.substring(lastColon + 1))
+
+        if (address.startsWith('[') && address.endsWith(']')) {
+          address = address.slice(1, -1)
+        }
+
+        if (address === '0.0.0.0' || address === '::' || address === '*') {
+          address = null
+        }
+
+        return { address, port }
+      }
+
+      const nameInfo = processIdToNameMap.get(pid)
+
+      results.push({
+        protocol,
+        local: parseAddr(local),
+        remote: parseAddr(remote),
+        state: state === 'LISTENING' ? 'LISTEN' : state,
+        pid: parseInt(pid),
+        processName: nameInfo ? nameInfo.name : ''
+        // path NOT fetched here
+      })
+    }
+    return results
+  } catch (e) {
+    console.error('Netstat exec failed:', e)
+    throw e
+  }
+}
+
+interface LsofEntry {
+  p?: string
+  c?: string
+  u?: string
+  P?: string
+  f?: string
+  t?: string
+  n?: string
+}
+
+interface ParsedLsofEntry {
+  protocol: string
+  local: { address: string | null; port: number }
+  remote: { address: string | null; port: number | null }
+  state: string
+  pid: number
+  processName: string
+  uid: number | null
+  fileDescriptor: string
+  fileType: string
 }
 
 function createWindow(): BrowserWindow {
@@ -142,119 +202,20 @@ app.whenReady().then(() => {
       const cmd = `powershell -NoProfile -EncodedCommand ${encodedCommand}`
       const { stdout } = await execAsync(cmd)
       return stdout.trim()
-    } catch (e) {
+    } catch {
       return ''
     }
   })
 
-  ipcMain.handle('get-netstat', async () => {
-    const processMap = await getProcessMap()
-
+  ipcMain.handle('get-process-info-list', async () => {
     try {
-      if (process.platform === 'darwin') {
-        // Use node-netstat for macOS
-        return new Promise((resolve, reject) => {
-          const results: any[] = []
-
-          const netstatCallback = (data: any) => {
-            const parseAddr = (addrObj: any) => {
-              if (!addrObj || typeof addrObj !== 'object') {
-                return { address: null, port: null }
-              }
-
-              let address = addrObj.address
-              const port = addrObj.port
-
-              if (address === '0.0.0.0' || address === '::' || address === '*' || address === '') {
-                address = null
-              }
-
-              return { address, port }
-            }
-
-            const info = processMap.get(data.pid?.toString() || '')
-
-            results.push({
-              protocol: data.protocol?.toLowerCase() || '',
-              local: parseAddr(data.local),
-              remote: parseAddr(data.remote),
-              state: data.state || '',
-              pid: parseInt(data.pid || '0'),
-              processName: info ? info.name : ''
-            })
-          }
-
-          try {
-            netstat({}, netstatCallback)
-
-            // Wait a bit for data collection, then resolve
-            setTimeout(() => {
-              resolve(results)
-            }, 1000)
-          } catch (error) {
-            console.error('node-netstat failed:', error)
-            reject(error)
-          }
-        })
-      } else {
-        // Use original netstat -ano for Windows
-        const { stdout } = await execAsync('netstat -ano')
-        const lines = stdout.split(/\r?\n/)
-        const results: any[] = []
-
-        for (const line of lines) {
-          const parts = line.trim().split(/\s+/)
-          if (parts.length < 4) continue
-          if (parts[0] === 'Proto' || parts[0] === 'Active') continue
-
-          let protocol = parts[0].toLowerCase()
-          const local = parts[1]
-          const remote = parts[2]
-          let state = ''
-          let pid = ''
-
-          if (protocol === 'tcp') {
-            state = parts[3]
-            pid = parts[4]
-          } else {
-            state = ''
-            pid = parts[3]
-          }
-
-          const isV6 = local.includes('[') || local.includes('::')
-          if (isV6) {
-            protocol = protocol === 'tcp' ? 'tcp6' : 'udp6'
-          }
-
-          const parseAddr = (addr: string) => {
-            const lastColon = addr.lastIndexOf(':')
-            let address: string | null = addr.substring(0, lastColon)
-            const port = parseInt(addr.substring(lastColon + 1))
-
-            if (address.startsWith('[') && address.endsWith(']')) {
-              address = address.slice(1, -1)
-            }
-
-            if (address === '0.0.0.0' || address === '::' || address === '*') {
-              address = null
-            }
-
-            return { address, port }
-          }
-
-          const info = processMap.get(pid)
-
-          results.push({
-            protocol,
-            local: parseAddr(local),
-            remote: parseAddr(remote),
-            state: state === 'LISTENING' ? 'LISTEN' : state,
-            pid: parseInt(pid),
-            processName: info ? info.name : ''
-            // path NOT fetched here
-          })
-        }
-        return results
+      if (process.platform === 'win32') {
+        return await getWindowsProcessInfoList()
+      } else if (process.platform === 'darwin') {
+        return await getLsofResults()
+      } else if (process.platform === 'linux') {
+        //TODO(xueshi): Implement linux netstat
+        throw new Error('Linux netstat not implemented')
       }
     } catch (e) {
       console.error('Netstat exec failed:', e)
@@ -262,18 +223,209 @@ app.whenReady().then(() => {
     }
   })
 
+  async function getLsofResults(): Promise<ParsedLsofEntry[]> {
+    const { stdout } = await execAsync('lsof -i -n -P -F pcuPftsn')
+
+    const lines = stdout.split('\n')
+    const results: ParsedLsofEntry[] = []
+
+    let currentEntry: LsofEntry = {}
+    let currentFd = ''
+    let currentType = ''
+    let currentProto = ''
+    let currentNetwork = ''
+    let currentPid = ''
+    let currentCmd = ''
+    let currentUid = ''
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]
+
+      const fieldCode = line[0]
+      const fieldValue = line.slice(1)
+
+      // New PID means new process - save previous entry if complete
+      if (fieldCode === 'p') {
+        // Save previous connection if we have network info
+        if (currentPid && currentNetwork) {
+          const entry: LsofEntry = {
+            p: currentPid,
+            c: currentCmd,
+            u: currentUid,
+            f: currentFd,
+            t: currentType,
+            P: currentProto,
+            n: currentNetwork
+          }
+          const parsed = parseLsofEntry(entry)
+          if (parsed) {
+            results.push(parsed)
+          }
+        }
+
+        // Start new process
+        currentPid = fieldValue
+        currentEntry = { p: currentPid }
+        currentFd = ''
+        currentType = ''
+        currentProto = ''
+        currentNetwork = ''
+        currentCmd = ''
+        currentUid = ''
+        continue
+      }
+
+      // Store fields in current entry
+      if (fieldCode === 'c') {
+        currentCmd = fieldValue
+        currentEntry.c = currentCmd
+      } else if (fieldCode === 'u') {
+        currentUid = fieldValue
+        currentEntry.u = currentUid
+      } else if (fieldCode === 'f') {
+        currentFd = fieldValue
+      } else if (fieldCode === 't') {
+        currentType = fieldValue
+      } else if (fieldCode === 'P') {
+        currentProto = fieldValue
+      } else if (fieldCode === 'n') {
+        // Save previous connection if we had one
+        if (currentPid && currentNetwork && currentFd) {
+          const entry: LsofEntry = {
+            p: currentPid,
+            c: currentCmd,
+            u: currentUid,
+            f: currentFd,
+            t: currentType,
+            P: currentProto,
+            n: currentNetwork
+          }
+          const parsed = parseLsofEntry(entry)
+          if (parsed) {
+            results.push(parsed)
+          }
+        }
+        // Start new connection
+        currentNetwork = fieldValue
+      }
+    }
+
+    // Save the last entry
+    if (currentPid && currentNetwork) {
+      const entry: LsofEntry = {
+        p: currentPid,
+        c: currentCmd,
+        u: currentUid,
+        f: currentFd,
+        t: currentType,
+        P: currentProto,
+        n: currentNetwork
+      }
+      const parsed = parseLsofEntry(entry)
+      if (parsed) {
+        results.push(parsed)
+      }
+    }
+
+    return results
+  }
+
+  function parseLsofEntry(entry: LsofEntry): ParsedLsofEntry | null {
+    if (!entry.p || !entry.c || !entry.n) {
+      return null
+    }
+
+    const pid = parseInt(entry.p)
+    const commandName = entry.c
+    const uid = entry.u || ''
+    const protocol = entry.P || ''
+    const fileDescriptor = entry.f || ''
+    const fileType = entry.t || ''
+    const networkInfo = entry.n || ''
+
+    // Parse network address information
+    let local: { address: string | null; port: number } = { address: null, port: 0 }
+    let remote: { address: string | null; port: number | null } = { address: null, port: null }
+    let state = ''
+
+    // Check if it's a listening socket or established connection
+    if (networkInfo.includes('->')) {
+      // Established connection: local->remote
+      const parts = networkInfo.split('->')
+      local = parseAddressPort(parts[0])
+      remote = parseAddressPort(parts[1])
+    } else {
+      // Listening socket or no connection
+      local = parseAddressPort(networkInfo)
+      state = 'LISTEN'
+    }
+
+    // Determine protocol type with IPv6 support
+    let protocolType = protocol.toLowerCase()
+    if (networkInfo.includes('[') || (local.address && local.address.includes(':'))) {
+      protocolType =
+        protocolType === 'tcp' ? 'tcp6' : protocolType === 'udp' ? 'udp6' : protocolType
+    }
+
+    return {
+      protocol: protocolType,
+      local,
+      remote,
+      state,
+      pid,
+      processName: commandName,
+      uid: parseInt(uid) || null,
+      fileDescriptor,
+      fileType
+    }
+  }
+
+  function parseAddressPort(addrStr: string): { address: string | null; port: number } {
+    if (!addrStr) {
+      return { address: null, port: 0 }
+    }
+
+    // Handle IPv6 addresses [::]:port or fe80::1:port
+    let address: string | null = null
+    let port = 0
+
+    // IPv6 pattern
+    const ipv6Match = addrStr.match(/^\[([^\]]+)\]:(\d+)$/)
+    if (ipv6Match) {
+      address = ipv6Match[1]
+      port = parseInt(ipv6Match[2])
+    } else {
+      // IPv4 or wildcard pattern
+      const lastColon = addrStr.lastIndexOf(':')
+      if (lastColon !== -1) {
+        address = addrStr.substring(0, lastColon)
+        const portStr = addrStr.substring(lastColon + 1)
+        port = parseInt(portStr, 10)
+      }
+    }
+
+    // Handle wildcard addresses
+    if (address === '*' || address === '0.0.0.0' || address === '::') {
+      address = null
+    }
+
+    return { address, port }
+  }
+
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow()
+    }
   })
-})
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
+  // Quit when all windows are closed, except on macOS. There, it's common
+  // for applications and their menu bar to stay active until the user quits
+  // explicitly with Cmd + Q.
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+      app.quit()
+    }
+  })
 })
