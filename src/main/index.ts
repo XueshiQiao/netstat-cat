@@ -7,17 +7,29 @@ import { promisify } from 'util'
 
 const execAsync = promisify(exec)
 
-interface ProcessInfo {
+interface ProcessNamePathInfo {
   name: string
   path: string
 }
 
 
-async function getWindowsProcessIdToNameMap(): Promise<Map<string, ProcessInfo>> {
+interface ProcessInfo {
+  protocol: string
+  local: { address: string | null; port: number | null }
+  remote: { address: string | null; port: number | null }
+  state: string
+  pid: number
+  processName: string
+  uid?: number  // uid is not supported on Windows
+  fileDescriptor?: string  // fileDescriptor is not supported on Windows
+  fileType?: string  // fileType is not supported on Windows
+}
+
+async function getWindowsProcessIdToNameMap(): Promise<Map<string, ProcessNamePathInfo>> {
   try {
     // Use tasklist for fast, lightweight name resolution
     const { stdout } = await execAsync('tasklist /fo csv /nh')
-    const map = new Map<string, ProcessInfo>()
+    const map = new Map<string, ProcessNamePathInfo>()
     const lines = stdout.split(/\r?\n/)
 
     lines.forEach((line) => {
@@ -38,7 +50,7 @@ async function getWindowsProcessIdToNameMap(): Promise<Map<string, ProcessInfo>>
   return new Map()
 }
 
-async function getWindowsProcessInfoList() {
+async function getWindowsProcessInfoList(): Promise<ProcessInfo[]> {
   const processIdToNameMap = await getWindowsProcessIdToNameMap()
 
   try {
@@ -113,18 +125,6 @@ interface LsofEntry {
   f?: string
   t?: string
   n?: string
-}
-
-interface ParsedLsofEntry {
-  protocol: string
-  local: { address: string | null; port: number }
-  remote: { address: string | null; port: number | null }
-  state: string
-  pid: number
-  processName: string
-  uid: number | null
-  fileDescriptor: string
-  fileType: string
 }
 
 function createWindow(): BrowserWindow {
@@ -223,11 +223,11 @@ app.whenReady().then(() => {
     }
   })
 
-  async function getLsofResults(): Promise<ParsedLsofEntry[]> {
+  async function getLsofResults(): Promise<ProcessInfo[]> {
     const { stdout } = await execAsync('lsof -i -n -P -F pcuPftsn')
 
     const lines = stdout.split('\n')
-    const results: ParsedLsofEntry[] = []
+    const results: ProcessInfo[] = []
 
     let currentEntry: LsofEntry = {}
     let currentFd = ''
@@ -330,7 +330,7 @@ app.whenReady().then(() => {
     return results
   }
 
-  function parseLsofEntry(entry: LsofEntry): ParsedLsofEntry | null {
+  function parseLsofEntry(entry: LsofEntry): ProcessInfo | null {
     if (!entry.p || !entry.c || !entry.n) {
       return null
     }
@@ -374,7 +374,7 @@ app.whenReady().then(() => {
       state,
       pid,
       processName: commandName,
-      uid: parseInt(uid) || null,
+      uid: parseInt(uid) || undefined,
       fileDescriptor,
       fileType
     }
