@@ -16,27 +16,7 @@ interface LsofEntry {
 
 export default class MacOSProcessFetcherImpl implements ProcessFetcher {
   private async _fetchProcessIdToNameMap(): Promise<Map<string, ProcessNamePathInfo>> {
-    try {
-      // Use tasklist for fast, lightweight name resolution
-      const { stdout } = await execAsync('tasklist /fo csv /nh')
-      const map = new Map<string, ProcessNamePathInfo>()
-      const lines = stdout.split(/\r?\n/)
-
-      lines.forEach((line) => {
-        if (!line.trim()) return
-        // CSV parsing for tasklist: "Image Name","PID",...
-        const safeParts = line.match(/"([^"]*)"/g)
-        if (safeParts && safeParts.length >= 2) {
-          const pName = safeParts[0].replace(/"/g, '')
-          const pPid = safeParts[1].replace(/"/g, '')
-          map.set(pPid, { name: pName, path: '' })
-        }
-      })
-      return map
-    } catch (e) {
-      console.error('Failed to get process map via tasklist', e)
-      return new Map()
-    }
+    return new Map()
   }
 
   parseLsofEntry(entry: LsofEntry): ProcessInfo | null {
