@@ -194,4 +194,4 @@ out
 .DS_Store
 .eslintcache
 *.log*
-build/
+!resources/entitlements.mac.plist

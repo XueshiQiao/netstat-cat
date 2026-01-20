@@ -2,6 +2,7 @@ import { app, shell, BrowserWindow, ipcMain, nativeImage } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.icns?asset'
+import iconPng from '../../resources/icon.png?asset'
 import { ProcessFetcherFactory } from './process_fetcher_factory'
 
 function createWindow(): BrowserWindow {
@@ -22,20 +23,23 @@ function createWindow(): BrowserWindow {
   // Set dock icon for macOS
   if (process.platform === 'darwin' && app.dock) {
     // Use PNG for better compatibility
-    const iconPath = join(process.cwd(), 'resources', 'icon.png')
-    const dockIcon = nativeImage.createFromPath(iconPath)
+    const dockIcon = nativeImage.createFromPath(iconPng)
     if (!dockIcon.isEmpty()) {
       // Resize to standard dock icon size for better quality
       const sizedIcon = dockIcon.resize({ width: 256, height: 256 })
       app.dock.setIcon(sizedIcon)
-      console.log('Dock icon set successfully from:', iconPath)
+      console.log('Dock icon set successfully from:', iconPng)
     } else {
-      console.error('Failed to load dock icon from:', iconPath)
+      console.error('Failed to load dock icon from:', iconPng)
     }
   }
 
   mainWindow.on('ready-to-show', () => {
+    const startTime = performance.now()
     mainWindow.show()
+    const endTime = performance.now()
+    const duration = endTime - startTime
+    console.log(`mainWindow.show() took ${duration.toFixed(2)} milliseconds`)
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -53,8 +57,23 @@ function createWindow(): BrowserWindow {
 }
 
 app.whenReady().then(() => {
+  // Set app name for menu bar (macOS)
+  console.log(`appname: ${app.getName()}, app version: ${app.getVersion()}`)
   // Set app user model id for windows
   electronApp.setAppUserModelId('me.xueshi.netstat-cat')
+
+  // Customize About panel for macOS
+  if (process.platform === 'darwin') {
+
+    app.setAboutPanelOptions({
+      iconPath: iconPng,
+      applicationName: app.getName(),
+      applicationVersion: app.getVersion(),
+      copyright: `Copyright © 2026 XueshiQiao`,
+      credits: 'Built with Electron and AI',
+      version: app.getVersion()
+    })
+  }
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
