@@ -400,11 +400,10 @@ function App() {
                   <button
                     key={p}
                     onClick={() => setFilterProtocol(p)}
-                    className={`px-4 py-1.5 text-xs font-medium border first:rounded-l-lg last:rounded-r-lg transition-colors ${
-                      filterProtocol === p
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
-                    }`}
+                    className={`px-4 py-1.5 text-xs font-medium border first:rounded-l-lg last:rounded-r-lg transition-colors ${filterProtocol === p
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                      }`}
                   >
                     {p.toUpperCase()}
                   </button>
@@ -422,11 +421,10 @@ function App() {
                   <button
                     key={v}
                     onClick={() => setFilterIpVer(v)}
-                    className={`px-4 py-1.5 text-xs font-medium border first:rounded-l-lg last:rounded-r-lg transition-colors ${
-                      filterIpVer === v
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
-                    }`}
+                    className={`px-4 py-1.5 text-xs font-medium border first:rounded-l-lg last:rounded-r-lg transition-colors ${filterIpVer === v
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                      }`}
                   >
                     {v === 'all' ? 'ALL' : `IPv${v}`}
                   </button>
@@ -449,11 +447,10 @@ function App() {
                   <button
                     key={s.id}
                     onClick={() => setFilterState(s.id as StateFilter)}
-                    className={`px-3 py-1.5 text-xs font-medium border first:rounded-l-lg last:rounded-r-lg transition-colors ${
-                      filterState === s.id
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
-                    }`}
+                    className={`px-3 py-1.5 text-xs font-medium border first:rounded-l-lg last:rounded-r-lg transition-colors ${filterState === s.id
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                      }`}
                   >
                     {s.label}
                   </button>
@@ -512,12 +509,12 @@ function App() {
                 <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-20 whitespace-nowrap">
                   PID
                 </th>
-                <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-20 whitespace-nowrap">
+                {/* <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-20 whitespace-nowrap">
                   UID
                 </th>
                 <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-20 whitespace-nowrap">
                   FD
-                </th>
+                </th> */}
                 <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-full whitespace-nowrap">
                   Process
                 </th>
@@ -527,13 +524,12 @@ function App() {
               <>
                 <td className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm align-top w-24 whitespace-nowrap">
                   <span
-                    className={`px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full ${
-                      item.protocol === 'tcp' ||
+                    className={`px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full ${item.protocol === 'tcp' ||
                       item.protocol === 'tcp4' ||
                       item.protocol === 'tcp6'
-                        ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300'
-                        : 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300'
-                    }`}
+                      ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300'
+                      : 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300'
+                      }`}
                   >
                     {item.protocol}
                   </span>
@@ -550,13 +546,12 @@ function App() {
                 <td className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm align-top w-32 whitespace-nowrap">
                   {item.state ? (
                     <span
-                      className={`px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full ${
-                        item.state === 'ESTABLISHED'
-                          ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300'
-                          : item.state === 'LISTEN' || item.state === 'LISTENING'
-                            ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
-                      }`}
+                      className={`px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full ${item.state === 'ESTABLISHED'
+                        ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300'
+                        : item.state === 'LISTEN' || item.state === 'LISTENING'
+                          ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                        }`}
                     >
                       {item.state}
                     </span>
@@ -567,12 +562,12 @@ function App() {
                 <td className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 align-top w-20 whitespace-nowrap">
                   {item.pid}
                 </td>
-                <td className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 align-top w-20 whitespace-nowrap">
+                {/* <td className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 align-top w-20 whitespace-nowrap">
                   {item.uid || '-'}
                 </td>
                 <td className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 align-top w-20 whitespace-nowrap font-mono">
                   {item.fileDescriptor || '-'}
-                </td>
+                </td> */}
                 <td
                   className="px-5 py-2 border-b border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 align-top truncate w-full"
                   title={item.processPath || item.processName}
