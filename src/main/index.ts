@@ -1,9 +1,8 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, nativeImage } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
+import icon from '../../resources/icon.icns?asset'
 import { ProcessFetcherFactory } from './process_fetcher_factory'
-
 
 function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
@@ -19,6 +18,21 @@ function createWindow(): BrowserWindow {
       sandbox: false
     }
   })
+
+  // Set dock icon for macOS
+  if (process.platform === 'darwin' && app.dock) {
+    // Use PNG for better compatibility
+    const iconPath = join(process.cwd(), 'resources', 'icon.png')
+    const dockIcon = nativeImage.createFromPath(iconPath)
+    if (!dockIcon.isEmpty()) {
+      // Resize to standard dock icon size for better quality
+      const sizedIcon = dockIcon.resize({ width: 256, height: 256 })
+      app.dock.setIcon(sizedIcon)
+      console.log('Dock icon set successfully from:', iconPath)
+    } else {
+      console.error('Failed to load dock icon from:', iconPath)
+    }
+  }
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
@@ -74,7 +88,7 @@ app.whenReady().then(() => {
   })
 
   // Lazy load process path
-  ipcMain.handle('get-process-path', async (_event, pid: number) => {
+  ipcMain.handle('get-process-path', async (_event, _pid: number) => {
     // try {
     //   const psScript = `(Get-Process -Id ${pid}).Path`
     //   const encodedCommand = Buffer.from(psScript, 'utf16le').toString('base64')
