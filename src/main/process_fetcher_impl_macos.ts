@@ -15,9 +15,9 @@ interface LsofEntry {
 }
 
 export default class MacOSProcessFetcherImpl implements ProcessFetcher {
-  private async _fetchProcessIdToNameMap(): Promise<Map<string, ProcessNamePathInfo>> {
-    return new Map()
-  }
+  // private async _fetchProcessIdToNameMap(): Promise<Map<string, ProcessNamePathInfo>> {
+  //   return new Map()
+  // }
 
   parseLsofEntry(entry: LsofEntry): ProcessInfo | null {
     if (!entry.p || !entry.c || !entry.n) {
@@ -207,7 +207,7 @@ export default class MacOSProcessFetcherImpl implements ProcessFetcher {
 
     return results
   }
-  async fetchProcessNamePathInfo(pid: number): Promise<ProcessNamePathInfo> {
+  async fetchProcessNamePathInfo(_pid: number): Promise<ProcessNamePathInfo> {
     return { name: '', path: '' }
   }
 }

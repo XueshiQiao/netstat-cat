@@ -94,7 +94,7 @@ export default class WinProcessFetcherImpl implements ProcessFetcher {
       throw e
     }
   }
-  async fetchProcessNamePathInfo(pid: number): Promise<ProcessNamePathInfo> {
+  async fetchProcessNamePathInfo(_pid: number): Promise<ProcessNamePathInfo> {
     return { name: '', path: '' }
   }
 }
