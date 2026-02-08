@@ -10,12 +10,12 @@
 
 ## 项目概述
 
-Netstat Cat 是一款 Electron 桌面应用程序，为 Windows 系统上的网络连接监控提供了用户友好的界面(后续会支持 macOS)。它作为命令行 `netstat` 工具的图形化替代品，让网络活动监控和应用程序端口识别变得更加简单。
+Netstat Cat 是一款基于 **Tauri v2** 和 **Rust** 构建的轻量级桌面应用程序，为 macOS 和 Windows 系统上的网络连接监控提供了用户友好的界面。它作为命令行 `netstat` 工具的图形化替代品，让网络活动监控和应用程序端口识别变得更加简单。
 
 ## 核心功能
 
 - **安全与隐私** - 纯本地运行，无网络连接或数据传输
-- **实时网络监控** - 使用 `netstat -ano` 实时显示活跃的 TCP/UDP 连接
+- **实时网络监控** - 实时显示活跃的 TCP/UDP 连接
 - **进程识别** - 显示每个网络连接所属的进程
 - **高级过滤系统** - 支持按进程名、PID、端口范围或语义查询搜索，如 `process=chrome && lport>1000` [详见过滤指南](filters_cn.md)
 - **虚拟化表格性能** - 使用 React Virtuoso 高效处理大量连接
@@ -43,9 +43,10 @@ _连接过滤选项_
 
 ### 系统要求
 
-- Windows 10 或更高版本
-- Node.js 16+
-- npm 或 yarn
+- macOS 10.15+ 或 Windows 10+
+- Node.js 20+
+- npm
+- Rust（通过 [rustup](https://rustup.rs/) 安装）
 
 ### 安装步骤
 
@@ -61,8 +62,8 @@ npm install
 ### 开发环境
 
 ```bash
-# 启动开发服务器
-npm run dev
+# 启动 Tauri 开发服务器（编译 Rust 后端 + 启动 Vite）
+npm run tauri:dev
 
 # 运行类型检查
 npm run typecheck
@@ -75,12 +76,7 @@ npm run lint
 
 ```bash
 # 构建当前平台
-npm run build
-
-# 特定平台构建
-npm run build:win    # Windows
-# npm run build:mac    # macOS
-# npm run build:linux  # Linux
+npm run tauri:build
 ```
 
 ## 使用指南
@@ -107,14 +103,14 @@ npm run build:win    # Windows
 - **React 19** 配合 TypeScript
 - **Tailwind CSS** 样式框架
 - **React Virtuoso** 虚拟化滚动
-- **Electron** 桌面应用框架
+- **Vite** 前端构建工具
 
-### 后端集成
+### 后端（Rust）
 
-- **Node.js** 主进程
-- **Windows 系统集成** 通过 `tasklist` 和 `netstat`
-- **IPC 通信** 渲染进程与主进程间通信
-- **LRU 缓存** 性能优化
+- **Tauri v2** 原生桌面集成（使用系统 WebView，二进制文件约 5MB）
+- **netstat2** crate 跨平台 socket 枚举
+- **sysinfo** crate PID 到进程名解析
+- **Tauri IPC** 前端与 Rust 后端通信
 
 ### 性能特性
 
@@ -132,17 +128,28 @@ npm run build:win    # Windows
 ### 项目结构
 
 ```
-src/
-├── main/           # Electron 主进程
-├── renderer/       # React 前端
-├── preload/        # Electron 预加载脚本
-└── resources/      # 应用资源
+netstat-cat/
+├── src/                  # React 前端
+│   ├── App.tsx           # 主界面组件
+│   ├── main.tsx          # 入口文件
+│   ├── assets/           # CSS 和图片
+│   └── utils/            # 查询解析器、进程缓存
+├── src-tauri/            # Rust 后端
+│   ├── src/
+│   │   ├── lib.rs        # Tauri 应用配置与命令注册
+│   │   ├── netstat.rs    # 网络 socket 获取逻辑
+│   │   └── process_info.rs  # 数据结构
+│   ├── Cargo.toml
+│   └── tauri.conf.json   # Tauri 配置
+├── index.html
+├── vite.config.ts
+└── resources/            # 图标和权限配置
 ```
 
 ### 脚本命令
 
-- `npm run dev` - 启动开发模式
-- `npm run build` - 生产构建
+- `npm run tauri:dev` - 启动 Tauri 开发模式
+- `npm run tauri:build` - 生产构建
 - `npm run typecheck` - TypeScript 类型检查
 - `npm run lint` - ESLint 代码检查
 - `npm run format` - Prettier 代码格式化
