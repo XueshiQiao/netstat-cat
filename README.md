@@ -10,12 +10,12 @@
 
 ## Overview
 
-Netstat Cat is an Electron desktop application that provides a user-friendly interface for monitoring network connections on Windows (for now). It serves as a graphical replacement for the command-line `netstat` tool, making it easier to monitor network activity and identify which applications are using specific ports.
+Netstat Cat is a lightweight desktop application built with **Tauri v2** and **Rust**, providing a user-friendly interface for monitoring network connections on macOS and Windows. It serves as a graphical replacement for the command-line `netstat` tool, making it easier to monitor network activity and identify which applications are using specific ports.
 
 ## Key Features
 
 - **Security & Privacy** - Pure local operation with no network connections or data transmission
-- **Real-time Network Monitoring** - Live display of active TCP/UDP connections using `netstat -ano`
+- **Real-time Network Monitoring** - Live display of active TCP/UDP connections
 - **Process Identification** - Shows which processes own each network connection
 - **Advanced Filtering System** - Search by process name, PID, port ranges, or semantic queries like `process=chrome && lport>1000` [See filtering guide](filters_en.md)
 - **Virtualized Table Performance** - Efficiently handles large numbers of connections using React Virtuoso
@@ -43,9 +43,10 @@ _Connection filtering options_
 
 ### Prerequisites
 
-- Windows 10 or later
-- Node.js 16+
-- npm or yarn
+- macOS 10.15+ or Windows 10+
+- Node.js 20+
+- npm
+- Rust (install via [rustup](https://rustup.rs/))
 
 ### Installation
 
@@ -61,8 +62,8 @@ npm install
 ### Development
 
 ```bash
-# Start development server
-npm run dev
+# Start Tauri development server (compiles Rust backend + starts Vite)
+npm run tauri:dev
 
 # Run type checking
 npm run typecheck
@@ -75,12 +76,7 @@ npm run lint
 
 ```bash
 # Build for current platform
-npm run build
-
-# Platform-specific builds
-npm run build:win    # Windows
-npm run build:mac    # macOS
-npm run build:linux  # Linux
+npm run tauri:build
 ```
 
 ## Usage Guide
@@ -107,14 +103,14 @@ See [filters_en.md](filters_en.md) for complete filtering documentation.
 - **React 19** with TypeScript
 - **Tailwind CSS** for styling
 - **React Virtuoso** for virtualized scrolling
-- **Electron** for desktop application framework
+- **Vite** for frontend bundling
 
-### Backend Integration
+### Backend (Rust)
 
-- **Node.js** main process
-- **Windows system integration** via `tasklist` and `netstat`
-- **IPC communication** between renderer and main processes
-- **LRU caching** for performance optimization
+- **Tauri v2** for native desktop integration (uses OS webview, ~5MB binary)
+- **netstat2** crate for cross-platform socket enumeration
+- **sysinfo** crate for PID-to-process name resolution
+- **Tauri IPC** for communication between frontend and Rust backend
 
 ### Performance Features
 
@@ -132,17 +128,28 @@ Recommended: [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketp
 ### Project Structure
 
 ```
-src/
-├── main/           # Electron main process
-├── renderer/       # React frontend
-├── preload/        # Electron preload scripts
-└── resources/      # Application assets
+netstat-cat/
+├── src/                  # React frontend
+│   ├── App.tsx           # Main UI component
+│   ├── main.tsx          # Entry point
+│   ├── assets/           # CSS and images
+│   └── utils/            # Query parser, process cache
+├── src-tauri/            # Rust backend
+│   ├── src/
+│   │   ├── lib.rs        # Tauri app setup & command registration
+│   │   ├── netstat.rs    # Network socket fetching logic
+│   │   └── process_info.rs  # Data structures
+│   ├── Cargo.toml
+│   └── tauri.conf.json   # Tauri configuration
+├── index.html
+├── vite.config.ts
+└── resources/            # Icons and entitlements
 ```
 
 ### Scripts
 
-- `npm run dev` - Start development mode
-- `npm run build` - Build for production
+- `npm run tauri:dev` - Start Tauri development mode
+- `npm run tauri:build` - Build for production
 - `npm run typecheck` - Run TypeScript type checking
 - `npm run lint` - Run ESLint
 - `npm run format` - Format code with Prettier
