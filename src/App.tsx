@@ -48,6 +48,8 @@ function App() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
+  const isMacOS = navigator.platform.toUpperCase().includes('MAC')
+
   const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
     clearTimeout(toastTimer.current)
     setToast({ message, type })
@@ -58,6 +60,12 @@ function App() {
   const handleMinimize = () => appWindow.minimize()
   const handleMaximize = () => appWindow.toggleMaximize()
   const handleClose = () => appWindow.close()
+
+  useEffect(() => {
+    if (!isMacOS) {
+      appWindow.setDecorations(false)
+    }
+  }, [])
 
   useEffect(() => {
     if (darkMode) {
@@ -261,13 +269,16 @@ function App() {
       <div className="bg-white dark:bg-gray-800 shadow-sm z-10 flex-shrink-0 drag-region transition-colors duration-200" data-tauri-drag-region>
         {/* Title Bar / Header Row */}
         <div className="flex justify-between items-center w-full">
-          <div className="px-8 py-3 flex items-center gap-3 select-none">
+          <div className={`${isMacOS ? 'pl-24' : 'pl-8'} pr-8 py-3 flex items-center gap-3 select-none`}>
             <img src={logo} alt="Logo" className="w-8 h-8 object-contain" />
             <h1 className="text-xl font-bold text-blue-600 dark:text-blue-400">Netstat Cat</h1>
+          </div>
+
+          <div className="flex items-center">
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="ml-1 p-1.5 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors no-drag flex items-center justify-center"
+              className="p-1.5 mr-4 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors no-drag flex items-center justify-center"
               title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
               {darkMode ? (
@@ -290,37 +301,38 @@ function App() {
                 </svg>
               )}
             </button>
-          </div>
-
-          {/* Custom Window Controls */}
-          <div className="flex self-start no-drag">
-              <button
-                onClick={handleMinimize}
-                className="w-[46px] py-3 hover:bg-gray-200/70 dark:hover:bg-gray-600/70 transition-colors flex items-center justify-center"
-                title="Minimize"
-              >
-                <svg className="w-[10px] h-[10px] text-gray-500 dark:text-gray-400" viewBox="0 0 10 10" fill="none" stroke="currentColor">
-                  <path d="M1 5h8" strokeWidth="1.2" strokeLinecap="round" />
-                </svg>
-              </button>
-              <button
-                onClick={handleMaximize}
-                className="w-[46px] py-3 hover:bg-gray-200/70 dark:hover:bg-gray-600/70 transition-colors flex items-center justify-center"
-                title="Maximize"
-              >
-                <svg className="w-[10px] h-[10px] text-gray-500 dark:text-gray-400" viewBox="0 0 10 10" fill="none" stroke="currentColor">
-                  <rect x="1" y="1" width="8" height="8" rx="1" strokeWidth="1.2" />
-                </svg>
-              </button>
-              <button
-                onClick={handleClose}
-                className="w-[46px] py-3 hover:bg-red-500 transition-colors flex items-center justify-center group"
-                title="Close"
-              >
-                <svg className="w-[10px] h-[10px] text-gray-500 dark:text-gray-400 group-hover:text-white" viewBox="0 0 10 10" fill="none" stroke="currentColor">
-                  <path d="M1 1l8 8M9 1l-8 8" strokeWidth="1.2" strokeLinecap="round" />
-                </svg>
-              </button>
+            {/* Custom Window Controls (Windows only) */}
+            {!isMacOS && (
+              <div className="flex self-start no-drag">
+                <button
+                  onClick={handleMinimize}
+                  className="w-[46px] py-3 hover:bg-gray-200/70 dark:hover:bg-gray-600/70 transition-colors flex items-center justify-center"
+                  title="Minimize"
+                >
+                  <svg className="w-[10px] h-[10px] text-gray-500 dark:text-gray-400" viewBox="0 0 10 10" fill="none" stroke="currentColor">
+                    <path d="M1 5h8" strokeWidth="1.2" strokeLinecap="round" />
+                  </svg>
+                </button>
+                <button
+                  onClick={handleMaximize}
+                  className="w-[46px] py-3 hover:bg-gray-200/70 dark:hover:bg-gray-600/70 transition-colors flex items-center justify-center"
+                  title="Maximize"
+                >
+                  <svg className="w-[10px] h-[10px] text-gray-500 dark:text-gray-400" viewBox="0 0 10 10" fill="none" stroke="currentColor">
+                    <rect x="1" y="1" width="8" height="8" rx="1" strokeWidth="1.2" />
+                  </svg>
+                </button>
+                <button
+                  onClick={handleClose}
+                  className="w-[46px] py-3 hover:bg-red-500 transition-colors flex items-center justify-center group"
+                  title="Close"
+                >
+                  <svg className="w-[10px] h-[10px] text-gray-500 dark:text-gray-400 group-hover:text-white" viewBox="0 0 10 10" fill="none" stroke="currentColor">
+                    <path d="M1 1l8 8M9 1l-8 8" strokeWidth="1.2" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
