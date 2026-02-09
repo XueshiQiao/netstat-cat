@@ -264,13 +264,10 @@ function App() {
           <div className="px-8 py-3 flex items-center gap-3 select-none">
             <img src={logo} alt="Logo" className="w-8 h-8 object-contain" />
             <h1 className="text-xl font-bold text-blue-600 dark:text-blue-400">Netstat Cat</h1>
-          </div>
-
-          <div className="flex items-center h-full self-start">
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="h-full px-4 py-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors no-drag flex items-center justify-center"
+              className="ml-1 p-1.5 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors no-drag flex items-center justify-center"
               title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
               {darkMode ? (
@@ -293,43 +290,37 @@ function App() {
                 </svg>
               )}
             </button>
+          </div>
 
-            {/* Custom Window Controls */}
-            <div className="flex no-drag h-full">
+          {/* Custom Window Controls */}
+          <div className="flex self-start no-drag">
               <button
                 onClick={handleMinimize}
-                className="px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-center group"
+                className="w-[46px] py-3 hover:bg-gray-200/70 dark:hover:bg-gray-600/70 transition-colors flex items-center justify-center"
                 title="Minimize"
               >
-                <div className="w-3 h-[1px] bg-gray-600 dark:bg-gray-400 group-hover:bg-gray-900 dark:group-hover:bg-white"></div>
+                <svg className="w-[10px] h-[10px] text-gray-500 dark:text-gray-400" viewBox="0 0 10 10" fill="none" stroke="currentColor">
+                  <path d="M1 5h8" strokeWidth="1.2" strokeLinecap="round" />
+                </svg>
               </button>
               <button
                 onClick={handleMaximize}
-                className="px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-center group"
+                className="w-[46px] py-3 hover:bg-gray-200/70 dark:hover:bg-gray-600/70 transition-colors flex items-center justify-center"
                 title="Maximize"
               >
-                <div className="w-3 h-3 border border-gray-600 dark:border-gray-400 group-hover:border-gray-900 dark:group-hover:border-white"></div>
+                <svg className="w-[10px] h-[10px] text-gray-500 dark:text-gray-400" viewBox="0 0 10 10" fill="none" stroke="currentColor">
+                  <rect x="1" y="1" width="8" height="8" rx="1" strokeWidth="1.2" />
+                </svg>
               </button>
               <button
                 onClick={handleClose}
-                className="px-4 py-3 hover:bg-red-600 transition-colors flex items-center justify-center group"
+                className="w-[46px] py-3 hover:bg-red-500 transition-colors flex items-center justify-center group"
                 title="Close"
               >
-                <svg
-                  className="w-3 h-3 text-gray-600 dark:text-gray-400 group-hover:text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                <svg className="w-[10px] h-[10px] text-gray-500 dark:text-gray-400 group-hover:text-white" viewBox="0 0 10 10" fill="none" stroke="currentColor">
+                  <path d="M1 1l8 8M9 1l-8 8" strokeWidth="1.2" strokeLinecap="round" />
                 </svg>
               </button>
-            </div>
           </div>
         </div>
 
