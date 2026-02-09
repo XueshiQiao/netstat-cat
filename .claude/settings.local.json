@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(cargo check:*)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}

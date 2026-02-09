@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { TableVirtuoso } from 'react-virtuoso'
 import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
@@ -43,6 +43,16 @@ function App() {
   const [filterProtocol, setFilterProtocol] = useState<ProtocolFilter>('all')
   const [filterIpVer, setFilterIpVer] = useState<IpVerFilter>('all')
   const [filterState, setFilterState] = useState<StateFilter>('all')
+
+  // Toast
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+
+  const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
+    clearTimeout(toastTimer.current)
+    setToast({ message, type })
+    toastTimer.current = setTimeout(() => setToast(null), 3000)
+  }, [])
 
   const appWindow = getCurrentWindow()
   const handleMinimize = () => appWindow.minimize()
@@ -99,6 +109,16 @@ function App() {
       }
       return newData
     })
+  }
+
+  const handleKillProcess = async (pid: number, processName: string) => {
+    try {
+      await invoke('kill_process', { pid })
+      showToast(`Process "${processName}" (PID: ${pid}) killed`)
+      await fetchData()
+    } catch (err: any) {
+      showToast(err.toString?.() || `Failed to kill process ${pid}`, 'error')
+    }
   }
 
   const fetchData = async () => {
@@ -479,6 +499,9 @@ function App() {
           <TableVirtuoso
             style={{ height: '100%' }}
             data={filteredData}
+            components={{
+              TableRow: ({ style, ...props }) => <tr {...props} style={style} className="group" />,
+            }}
             fixedHeaderContent={() => (
               <tr className="bg-gray-50 dark:bg-gray-700 transition-colors">
                 <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-24 whitespace-nowrap">
@@ -504,6 +527,8 @@ function App() {
                 </th> */}
                 <th className="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-600 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-full whitespace-nowrap">
                   Process
+                </th>
+                <th className="px-2 py-3 border-b-2 border-gray-200 dark:border-gray-600 w-10 sticky right-0 bg-gray-50 dark:bg-gray-700">
                 </th>
               </tr>
             )}
@@ -562,11 +587,33 @@ function App() {
                 >
                   {item.processName || '-'}
                 </td>
+                <td className="px-2 py-2 border-b border-gray-200 dark:border-gray-700 align-top w-10 sticky right-0 bg-white dark:bg-gray-800">
+                  <button
+                    onClick={() => handleKillProcess(item.pid, item.processName)}
+                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/50 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-all"
+                    title={`Kill process ${item.processName} (PID: ${item.pid})`}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </td>
               </>
             )}
           />
         )}
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-lg shadow-lg text-sm font-medium transition-all animate-fade-in ${
+          toast.type === 'success'
+            ? 'bg-green-600 text-white'
+            : 'bg-red-600 text-white'
+        }`}>
+          {toast.message}
+        </div>
+      )}
     </div>
   )
 }
