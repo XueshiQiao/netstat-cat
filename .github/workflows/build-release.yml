@@ -27,18 +27,17 @@ jobs:
           node-version: '24.13.0'
           cache: 'npm'
 
+      # Setup Rust toolchain
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
       # Install project dependencies
       - name: Install dependencies
         run: npm ci
 
-      # Build the application
-      - name: Build application
-        run: npm run build
-
-      # Build Windows executable
-      - name: Build for Windows
-        if: matrix.os == 'windows-latest'
-        run: npm run build:win
+      # Build Tauri application
+      - name: Build Tauri app
+        run: npm run tauri:build
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -62,7 +61,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-installer
-          path: dist/*.exe
+          path: src-tauri/target/release/bundle/nsis/*.exe
 
       # Upload macOS artifacts (commented out)
       # - name: Upload macOS artifacts
@@ -114,7 +113,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            artifacts/windows-installer/*.exe
+            artifacts/windows-installer/**/*.exe
             # artifacts/macos-dmg/*.dmg
             # artifacts/linux-appimage/*.AppImage
             # artifacts/linux-deb/*.deb
