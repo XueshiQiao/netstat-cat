@@ -28,7 +28,18 @@
       "Bash(git -C /Users/joey/Code/netstat-cat add src-tauri/tauri.conf.json src/App.tsx)",
       "Bash(git -C /Users/joey/Code/netstat-cat commit -m \"$\\(cat <<''EOF''\nAdapt title bar to macOS native traffic light controls\n\nUse Tauri''s titleBarStyle Overlay with native traffic lights on macOS\nwhile keeping custom window controls on Windows via platform detection.\nMove theme toggle to the right side of the title bar.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git -C /Users/joey/Code/netstat-cat push -u origin macos)",
-      "Bash(git -C /Users/joey/Code/netstat-cat checkout -- src/App.tsx src-tauri/tauri.conf.json)"
+      "Bash(git -C /Users/joey/Code/netstat-cat checkout -- src/App.tsx src-tauri/tauri.conf.json)",
+      "Bash(git -C /Users/joey/Code/netstat-cat diff)",
+      "Bash(git -C /Users/joey/Code/netstat-cat add src/App.tsx)",
+      "Bash(git -C /Users/joey/Code/netstat-cat commit -m \"$\\(cat <<''EOF''\nFix title bar drag region for macOS Overlay mode\n\nAdd data-tauri-drag-region to inner title bar elements and\npointer-events-none to logo/title so dragging works everywhere\non the title bar.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "WebFetch(domain:loewald.com)",
+      "Bash(npm pkg set:*)",
+      "Bash(source:*)",
+      "Bash(export NVM_DIR=\"$HOME/.nvm\")",
+      "Bash([ -s \"$NVM_DIR/nvm.sh\" ])",
+      "Bash(. \"$NVM_DIR/nvm.sh\")",
+      "Bash(npm version:*)",
+      "Bash(git add:*)"
     ]
   }
 }
