@@ -16,8 +16,11 @@
         "width": 900,
         "height": 670,
         "center": true,
-        "decorations": false,
-        "visible": false
+        "decorations": true,
+        "visible": false,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "trafficLightPosition": { "x": 20.0, "y": 28.0 }
       }
     ],
     "security": {
