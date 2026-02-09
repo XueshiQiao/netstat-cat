@@ -268,10 +268,10 @@ function App() {
     <div className="h-screen flex flex-col bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 overflow-hidden transition-colors duration-200">
       <div className="bg-white dark:bg-gray-800 shadow-sm z-10 flex-shrink-0 drag-region transition-colors duration-200" data-tauri-drag-region>
         {/* Title Bar / Header Row */}
-        <div className="flex justify-between items-center w-full">
-          <div className={`${isMacOS ? 'pl-24' : 'pl-8'} pr-8 py-3 flex items-center gap-3 select-none`}>
-            <img src={logo} alt="Logo" className="w-8 h-8 object-contain" />
-            <h1 className="text-xl font-bold text-blue-600 dark:text-blue-400">Netstat Cat</h1>
+        <div className="flex justify-between items-center w-full" data-tauri-drag-region>
+          <div className={`${isMacOS ? 'pl-24' : 'pl-8'} pr-8 py-3 flex items-center gap-3 select-none`} data-tauri-drag-region>
+            <img src={logo} alt="Logo" className="w-8 h-8 object-contain pointer-events-none" />
+            <h1 className="text-xl font-bold text-blue-600 dark:text-blue-400 pointer-events-none">Netstat Cat</h1>
           </div>
 
           <div className="flex items-center">
