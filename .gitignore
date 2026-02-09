@@ -198,3 +198,6 @@ out
 
 # Tauri
 src-tauri/target/
+
+# Claude Code
+.claude/settings.local.json
