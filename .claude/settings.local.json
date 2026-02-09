@@ -3,7 +3,27 @@
     "allow": [
       "Bash(cat:*)",
       "Bash(cargo check:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(wc:*)",
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "WebSearch",
+      "mcp__plugin_context7_context7__query-docs",
+      "WebFetch(domain:docs.rs)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:v2.tauri.app)",
+      "WebFetch(domain:crates.io)",
+      "Bash(npm install:*)",
+      "Bash(npx tauri icon:*)",
+      "Bash(npx tauri dev:*)",
+      "Bash(node:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(git -C /Users/joey/Code/netstat-cat status)",
+      "Bash(git -C /Users/joey/Code/netstat-cat diff --stat)",
+      "Bash(git -C /Users/joey/Code/netstat-cat log --oneline -5)",
+      "Bash(git -C /Users/joey/Code/netstat-cat add .gitignore .npmrc README.md README_CN.md dev-app-update.yml electron-builder.yml electron.vite.config.ts eslint.config.mjs package-lock.json package.json tailwind.config.js tsconfig.json tsconfig.node.json tsconfig.web.json src/main/ src/preload/ src/renderer/ index.html vite.config.ts src-tauri/ src/App.tsx src/assets/ src/env.d.ts src/main.tsx src/utils/)",
+      "Bash(git -C /Users/joey/Code/netstat-cat commit -m \"$\\(cat <<''EOF''\nMigrate from Electron to Tauri v2 + Rust\n\nReplace the Electron shell with Tauri v2, using Rust crates netstat2 and\nsysinfo for cross-platform network socket enumeration and process\nresolution. This drops the ~150MB Chromium bundle in favor of the OS\nnative webview, producing a ~5MB binary.\n\n- Add src-tauri/ Rust backend \\(lib.rs, netstat.rs, process_info.rs\\)\n- Move frontend from src/renderer/src/ to src/\n- Replace Electron IPC with Tauri invoke\\(\\) + getCurrentWindow\\(\\)\n- Remove Electron, electron-vite, electron-builder and related configs\n- Update READMEs to reflect new stack and commands\n- Support macOS and Windows\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C /Users/joey/Code/netstat-cat push -u origin taurify)"
     ]
   }
 }
