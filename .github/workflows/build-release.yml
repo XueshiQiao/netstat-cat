@@ -78,6 +78,16 @@ jobs:
         with:
           args: --target ${{ matrix.target }}
 
+      - name: Rename artifacts to include architecture
+        run: |
+          cd src-tauri/target/${{ matrix.target }}/release/bundle/macos
+          for f in *.app.tar.gz; do
+            mv "$f" "${f%.app.tar.gz}_${{ matrix.arch }}.app.tar.gz"
+          done
+          for f in *.app.tar.gz.sig; do
+            mv "$f" "${f%.app.tar.gz.sig}_${{ matrix.arch }}.app.tar.gz.sig"
+          done
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
