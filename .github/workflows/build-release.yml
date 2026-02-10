@@ -30,6 +30,7 @@ jobs:
         with:
           node-version: 'lts/*'
           cache: 'npm'
+
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -82,10 +83,10 @@ jobs:
         run: |
           cd src-tauri/target/${{ matrix.target }}/release/bundle/macos
           for f in *.app.tar.gz; do
-            mv "$f" "${f%.app.tar.gz}_${{ matrix.arch }}.app.tar.gz"
+            [ -f "$f" ] && mv "$f" "${f%.app.tar.gz}_${{ matrix.arch }}.app.tar.gz"
           done
           for f in *.app.tar.gz.sig; do
-            mv "$f" "${f%.app.tar.gz.sig}_${{ matrix.arch }}.app.tar.gz.sig"
+            [ -f "$f" ] && mv "$f" "${f%.app.tar.gz.sig}_${{ matrix.arch }}.app.tar.gz.sig"
           done
 
       - name: Upload artifacts
@@ -148,6 +149,42 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R artifacts/
 
+      - name: Get version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Generate latest.json
+        run: |
+          REPO="${{ github.repository }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="${{ github.ref_name }}"
+          DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Find artifact filenames
+          SILICON_TAR=$(ls artifacts/macos-silicon/*.app.tar.gz 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
+          INTEL_TAR=$(ls artifacts/macos-intel/*.app.tar.gz 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
+          WIN_NSIS=$(ls artifacts/windows-installer/*.exe 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
+
+          cat > artifacts/latest.json << ENDJSON
+          {
+            "version": "${VERSION}",
+            "pub_date": "${DATE}",
+            "platforms": {
+              "darwin-aarch64": {
+                "url": "https://github.com/${REPO}/releases/download/${TAG}/${SILICON_TAR}"
+              },
+              "darwin-x86_64": {
+                "url": "https://github.com/${REPO}/releases/download/${TAG}/${INTEL_TAR}"
+              },
+              "windows-x86_64": {
+                "url": "https://github.com/${REPO}/releases/download/${TAG}/${WIN_NSIS}"
+              }
+            }
+          }
+          ENDJSON
+
+          cat artifacts/latest.json
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -155,6 +192,7 @@ jobs:
             artifacts/macos-silicon/**/*
             artifacts/macos-intel/**/*
             artifacts/windows-installer/**/*
+            artifacts/latest.json
           generate_release_notes: true
           draft: false
           prerelease: false
