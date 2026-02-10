@@ -40,6 +40,18 @@
     "macOS": {
       "entitlements": "../resources/entitlements.mac.plist",
       "minimumSystemVersion": "10.13"
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVBMkNGQkRBNDcyMkFDNjkKUldScHJDSkgydnNzV3FFNmVxZEZsWmp6dzBCMjYzellHOEZDekFkd09oZWlWRC9BWmN6T0NtU2gK",
+      "endpoints": [
+        "https://github.com/XueshiQiao/netstat-cat/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
     }
   }
 }

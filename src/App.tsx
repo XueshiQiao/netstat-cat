@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { TableVirtuoso } from 'react-virtuoso'
 import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
+import { check } from '@tauri-apps/plugin-updater'
 import { parseQuery } from './utils/queryParser'
 import { pathCache } from './utils/processCache'
 import logo from './assets/pure_cat_logo.png'
@@ -44,6 +45,11 @@ function App() {
   const [filterIpVer, setFilterIpVer] = useState<IpVerFilter>('all')
   const [filterState, setFilterState] = useState<StateFilter>('all')
 
+  // Update
+  type UpdateStatus = 'idle' | 'checking' | 'available' | 'downloading' | 'up-to-date' | 'error'
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('idle')
+  const pendingUpdate = useRef<Awaited<ReturnType<typeof check>> | null>(null)
+
   // Toast
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -78,6 +84,42 @@ function App() {
   }, [darkMode])
 
   const toggleTheme = () => setDarkMode(!darkMode)
+
+  const handleCheckUpdate = async () => {
+    if (updateStatus === 'checking' || updateStatus === 'downloading') return
+    setUpdateStatus('checking')
+    try {
+      const update = await check()
+      if (update) {
+        pendingUpdate.current = update
+        setUpdateStatus('available')
+        showToast(`Update ${update.version} available`)
+      } else {
+        setUpdateStatus('up-to-date')
+        setTimeout(() => setUpdateStatus('idle'), 3000)
+      }
+    } catch (e: any) {
+      console.error('Update check failed:', e)
+      setUpdateStatus('error')
+      showToast(e.toString?.() || 'Update check failed', 'error')
+      setTimeout(() => setUpdateStatus('idle'), 3000)
+    }
+  }
+
+  const handleInstallUpdate = async () => {
+    const update = pendingUpdate.current
+    if (!update) return
+    setUpdateStatus('downloading')
+    try {
+      await update.downloadAndInstall()
+      showToast('Update installed — relaunch to apply')
+    } catch (e: any) {
+      console.error('Update install failed:', e)
+      setUpdateStatus('error')
+      showToast(e.toString?.() || 'Update install failed', 'error')
+      setTimeout(() => setUpdateStatus('idle'), 3000)
+    }
+  }
 
   const handleProcessHover = async (_index: number, item: NetstatItem) => {
     // 1. Check if path is already in item (fastest)
@@ -275,6 +317,39 @@ function App() {
           </div>
 
           <div className="flex items-center">
+            {/* Update Check Button */}
+            <button
+              onClick={updateStatus === 'available' ? handleInstallUpdate : handleCheckUpdate}
+              disabled={updateStatus === 'checking' || updateStatus === 'downloading'}
+              className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors no-drag flex items-center justify-center disabled:opacity-50"
+              title={
+                updateStatus === 'checking' ? 'Checking for updates...' :
+                updateStatus === 'available' ? 'Click to install update' :
+                updateStatus === 'downloading' ? 'Downloading update...' :
+                updateStatus === 'up-to-date' ? 'Up to date' :
+                updateStatus === 'error' ? 'Update check failed' :
+                'Check for updates'
+              }
+            >
+              {(updateStatus === 'checking' || updateStatus === 'downloading') ? (
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : updateStatus === 'available' ? (
+                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              ) : updateStatus === 'up-to-date' ? (
+                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+              )}
+            </button>
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}

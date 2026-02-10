@@ -76,6 +76,8 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           args: --target ${{ matrix.target }}
 
@@ -126,6 +128,8 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -134,11 +138,13 @@ jobs:
           path: |
             src-tauri/target/release/bundle/msi/*.msi
             src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/nsis/*.nsis.zip
+            src-tauri/target/release/bundle/nsis/*.nsis.zip.sig
 
   release:
     needs: [build-macos, build-windows]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Download all artifacts
@@ -151,41 +157,56 @@ jobs:
 
       - name: Get version from tag
         id: version
-        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "version=0.0.0-dev" >> $GITHUB_OUTPUT
+            echo "tag=dev" >> $GITHUB_OUTPUT
+          fi
 
       - name: Generate latest.json
         run: |
           REPO="${{ github.repository }}"
           VERSION="${{ steps.version.outputs.version }}"
-          TAG="${{ github.ref_name }}"
+          TAG="${{ steps.version.outputs.tag }}"
           DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
           # Find artifact filenames
           SILICON_TAR=$(ls artifacts/macos-silicon/*.app.tar.gz 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
           INTEL_TAR=$(ls artifacts/macos-intel/*.app.tar.gz 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
-          WIN_NSIS=$(ls artifacts/windows-installer/*.exe 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
+          WIN_NSIS_ZIP=$(ls artifacts/windows-installer/*.nsis.zip 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
 
-          cat > artifacts/latest.json << ENDJSON
-          {
-            "version": "${VERSION}",
-            "pub_date": "${DATE}",
-            "platforms": {
-              "darwin-aarch64": {
-                "url": "https://github.com/${REPO}/releases/download/${TAG}/${SILICON_TAR}"
-              },
-              "darwin-x86_64": {
-                "url": "https://github.com/${REPO}/releases/download/${TAG}/${INTEL_TAR}"
-              },
-              "windows-x86_64": {
-                "url": "https://github.com/${REPO}/releases/download/${TAG}/${WIN_NSIS}"
+          # Read signatures from .sig files
+          SILICON_SIG=$(cat artifacts/macos-silicon/*.app.tar.gz.sig 2>/dev/null || echo "")
+          INTEL_SIG=$(cat artifacts/macos-intel/*.app.tar.gz.sig 2>/dev/null || echo "")
+          WIN_SIG=$(cat artifacts/windows-installer/*.nsis.zip.sig 2>/dev/null || echo "")
+
+          # Build latest.json with jq for proper escaping
+          jq -n \
+            --arg version "$VERSION" \
+            --arg pub_date "$DATE" \
+            --arg silicon_url "https://github.com/${REPO}/releases/download/${TAG}/${SILICON_TAR}" \
+            --arg silicon_sig "$SILICON_SIG" \
+            --arg intel_url "https://github.com/${REPO}/releases/download/${TAG}/${INTEL_TAR}" \
+            --arg intel_sig "$INTEL_SIG" \
+            --arg win_url "https://github.com/${REPO}/releases/download/${TAG}/${WIN_NSIS_ZIP}" \
+            --arg win_sig "$WIN_SIG" \
+            '{
+              version: $version,
+              pub_date: $pub_date,
+              platforms: {
+                "darwin-aarch64": { url: $silicon_url, signature: $silicon_sig },
+                "darwin-x86_64": { url: $intel_url, signature: $intel_sig },
+                "windows-x86_64": { url: $win_url, signature: $win_sig }
               }
-            }
-          }
-          ENDJSON
+            }' > artifacts/latest.json
 
           cat artifacts/latest.json
 
       - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
