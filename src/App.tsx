@@ -68,12 +68,6 @@ function App() {
   const handleClose = () => appWindow.close()
 
   useEffect(() => {
-    if (!isMacOS) {
-      appWindow.setDecorations(false)
-    }
-  }, [])
-
-  useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark')
       localStorage.setItem('theme', 'dark')

@@ -37,6 +37,23 @@ pub fn run() {
         .setup(|app| {
             #[cfg(desktop)]
             app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
+
+            // decorations: true in tauri.conf.json is required for macOS — it keeps the
+            // native traffic light buttons (close/minimize/fullscreen). Combined with
+            // titleBarStyle: "Overlay" and hiddenTitle: true, the title bar becomes
+            // transparent while the traffic lights float over our web content.
+            //
+            // On Windows, however, decorations: true shows a full native title bar,
+            // which duplicates our custom React title bar. So we disable it here,
+            // before the window becomes visible (visible: false in config).
+            #[cfg(target_os = "windows")]
+            {
+                use tauri::Manager;
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.set_decorations(false);
+                }
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
