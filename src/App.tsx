@@ -3,10 +3,12 @@ import { TableVirtuoso } from 'react-virtuoso'
 import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { check } from '@tauri-apps/plugin-updater'
-import { trackEvent } from '@aptabase/tauri'
+import { init as initAptabase, trackEvent } from '@aptabase/web'
 import { parseQuery } from './utils/queryParser'
 import { pathCache } from './utils/processCache'
 import logo from './assets/pure_cat_logo.png'
+
+initAptabase('A-US-4170254896')
 
 interface NetstatItem {
   protocol: string
