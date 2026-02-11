@@ -34,6 +34,7 @@ fn kill_process(pid: u32) -> Result<(), String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_aptabase::Builder::new("A-US-4170254896").build())
         .setup(|app| {
             #[cfg(desktop)]
             app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;

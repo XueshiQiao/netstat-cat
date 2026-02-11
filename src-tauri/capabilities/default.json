@@ -11,6 +11,7 @@
     "core:window:allow-close",
     "core:window:allow-show",
     "core:window:allow-start-dragging",
-    "updater:default"
+    "updater:default",
+    "aptabase:allow-track-event"
   ]
 }
