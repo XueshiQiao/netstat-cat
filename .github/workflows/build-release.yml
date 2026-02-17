@@ -101,6 +101,14 @@ jobs:
             src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app.tar.gz.sig
 
   build-windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-msvc
+            arch: x64
+          - target: aarch64-pc-windows-msvc
+            arch: arm64
     runs-on: windows-latest
 
     steps:
@@ -115,6 +123,8 @@ jobs:
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc,aarch64-pc-windows-msvc
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
@@ -130,16 +140,18 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          args: --target ${{ matrix.target }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: windows-installer
+          name: windows-${{ matrix.arch }}
           path: |
-            src-tauri/target/release/bundle/msi/*.msi
-            src-tauri/target/release/bundle/nsis/*.exe
-            src-tauri/target/release/bundle/nsis/*.nsis.zip
-            src-tauri/target/release/bundle/nsis/*.nsis.zip.sig
+            src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi
+            src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe
+            src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.nsis.zip
+            src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.nsis.zip.sig
 
   release:
     needs: [build-macos, build-windows]
@@ -176,12 +188,14 @@ jobs:
           # Find artifact filenames
           SILICON_TAR=$(ls artifacts/macos-silicon/*.app.tar.gz 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
           INTEL_TAR=$(ls artifacts/macos-intel/*.app.tar.gz 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
-          WIN_NSIS_ZIP=$(ls artifacts/windows-installer/*.nsis.zip 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
+          WIN_X64_NSIS_ZIP=$(ls artifacts/windows-x64/*.nsis.zip 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
+          WIN_ARM64_NSIS_ZIP=$(ls artifacts/windows-arm64/*.nsis.zip 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "")
 
           # Read signatures from .sig files
           SILICON_SIG=$(cat artifacts/macos-silicon/*.app.tar.gz.sig 2>/dev/null || echo "")
           INTEL_SIG=$(cat artifacts/macos-intel/*.app.tar.gz.sig 2>/dev/null || echo "")
-          WIN_SIG=$(cat artifacts/windows-installer/*.nsis.zip.sig 2>/dev/null || echo "")
+          WIN_X64_SIG=$(cat artifacts/windows-x64/*.nsis.zip.sig 2>/dev/null || echo "")
+          WIN_ARM64_SIG=$(cat artifacts/windows-arm64/*.nsis.zip.sig 2>/dev/null || echo "")
 
           # Build latest.json with jq for proper escaping
           jq -n \
@@ -191,15 +205,18 @@ jobs:
             --arg silicon_sig "$SILICON_SIG" \
             --arg intel_url "https://github.com/${REPO}/releases/download/${TAG}/${INTEL_TAR}" \
             --arg intel_sig "$INTEL_SIG" \
-            --arg win_url "https://github.com/${REPO}/releases/download/${TAG}/${WIN_NSIS_ZIP}" \
-            --arg win_sig "$WIN_SIG" \
+            --arg win_x64_url "https://github.com/${REPO}/releases/download/${TAG}/${WIN_X64_NSIS_ZIP}" \
+            --arg win_x64_sig "$WIN_X64_SIG" \
+            --arg win_arm64_url "https://github.com/${REPO}/releases/download/${TAG}/${WIN_ARM64_NSIS_ZIP}" \
+            --arg win_arm64_sig "$WIN_ARM64_SIG" \
             '{
               version: $version,
               pub_date: $pub_date,
               platforms: {
                 "darwin-aarch64": { url: $silicon_url, signature: $silicon_sig },
                 "darwin-x86_64": { url: $intel_url, signature: $intel_sig },
-                "windows-x86_64": { url: $win_url, signature: $win_sig }
+                "windows-x86_64": { url: $win_x64_url, signature: $win_x64_sig },
+                "windows-aarch64": { url: $win_arm64_url, signature: $win_arm64_sig }
               }
             }' > artifacts/latest.json
 
@@ -212,7 +229,8 @@ jobs:
           files: |
             artifacts/macos-silicon/**/*
             artifacts/macos-intel/**/*
-            artifacts/windows-installer/**/*
+            artifacts/windows-x64/**/*
+            artifacts/windows-arm64/**/*
             artifacts/latest.json
           generate_release_notes: true
           draft: false
