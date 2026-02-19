@@ -46,8 +46,7 @@ _Connection filtering options_
 - **macOS only (Homebrew)**
 
 ```bash
-brew tap XueshiQiao/homebrew-tap
-brew install --cask netstat-cat
+brew install --cask xueshiqiao/tap/netstat-cat
 ```
 
 - **macOS and Windows (Direct Download)**
