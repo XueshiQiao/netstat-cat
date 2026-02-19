@@ -39,6 +39,21 @@ _Advanced query filtering_
 <img src="screenshots/04-filter.png" alt="Filter Options" width="600"/>
 _Connection filtering options_
 
+## Getting Started
+
+### Install App
+
+- **macOS only (Homebrew)**
+
+```bash
+brew tap XueshiQiao/homebrew-tap
+brew install --cask netstat-cat
+```
+
+- **macOS and Windows (Direct Download)**
+
+Download from GitHub Releases: [https://github.com/XueshiQiao/PastePaw/releases](https://github.com/XueshiQiao/PastePaw/releases)
+
 ## Quick Start
 
 ### Prerequisites
@@ -48,7 +63,7 @@ _Connection filtering options_
 - npm
 - Rust (install via [rustup](https://rustup.rs/))
 
-### Installation
+### Installation (Build from Source)
 
 ```bash
 # Clone the repository
