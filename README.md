@@ -27,17 +27,20 @@ Netstat Cat is a lightweight desktop application built with **Tauri v2** and **R
 
 ## Screenshots
 
+<img src="screenshots/macos-02.png" alt="Light Theme" width="600"/>
+Light theme on macOS
+
+<img src="screenshots/macos-01.png" alt="Dark Theme" width="600"/>
+Dark theme on macOS
+
+<img src="screenshots/macos-03.png" alt="Query Feature" width="600"/>
+Advanced query filtering on macOS
+
 <img src="screenshots/00-light.png" alt="Light Theme" width="600"/>
-_Light theme interface_
+Light theme on Windows
 
 <img src="screenshots/01-dark.png" alt="Dark Theme" width="600"/>
-_Dark theme interface_
-
-<img src="screenshots/03-query.png" alt="Query Feature" width="600"/>
-_Advanced query filtering_
-
-<img src="screenshots/04-filter.png" alt="Filter Options" width="600"/>
-_Connection filtering options_
+Dark theme on Windows
 
 ## Getting Started
 
