@@ -54,7 +54,7 @@ brew install --cask xueshiqiao/tap/netstat-cat
 
 - **macOS and Windows (Direct Download)**
 
-Download from GitHub Releases: [https://github.com/XueshiQiao/PastePaw/releases](https://github.com/XueshiQiao/PastePaw/releases)
+Download from GitHub Releases: [https://github.com/XueshiQiao/netstat-cat/releases](https://github.com/XueshiQiao/netstat-cat/releases)
 
 ## Quick Start
 
