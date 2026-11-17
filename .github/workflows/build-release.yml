@@ -222,6 +222,30 @@ jobs:
 
           cat artifacts/latest.json
 
+      # The disk images Tauri builds carry the version in their file name
+      # (Netstat.Cat_0.1.0_aarch64.dmg), so their download address changes with
+      # every release. The "More Apps" page in the author's other apps
+      # (MoreAppsKit) needs an address that never changes:
+      #   releases/latest/download/NetstatCat_macos_aarch64.dmg
+      #   releases/latest/download/NetstatCat_macos_x64.dmg
+      # These are plain copies of the versioned images, which stay as they are.
+      # A release without them would break that download link for every user of
+      # those apps, so a missing image fails the job instead of passing quietly.
+      - name: Add fixed-name disk images
+        run: |
+          mkdir -p artifacts/fixed-names
+          copy_image() {
+            src=$(find "artifacts/$1" -name '*.dmg' | head -1)
+            if [ -z "$src" ]; then
+              echo "::error::No .dmg found in artifacts/$1; cannot publish $2"
+              exit 1
+            fi
+            cp "$src" "artifacts/fixed-names/$2"
+          }
+          copy_image macos-silicon NetstatCat_macos_aarch64.dmg
+          copy_image macos-intel   NetstatCat_macos_x64.dmg
+          ls -l artifacts/fixed-names
+
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
@@ -229,6 +253,7 @@ jobs:
           files: |
             artifacts/macos-silicon/**/*
             artifacts/macos-intel/**/*
+            artifacts/fixed-names/*
             artifacts/windows-x64/**/*
             artifacts/windows-arm64/**/*
             artifacts/latest.json
